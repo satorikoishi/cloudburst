@@ -7,6 +7,6 @@ protobuf==3.18.3
 pyarrow==1.0.0
 pycodestyle==2.5.0
 PyYAML==5.4
-pyzmq==17.1.2
+pyzmq==25.0.0
 zmq==0.0.0
 setuptools==45.2.0
