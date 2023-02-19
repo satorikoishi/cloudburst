@@ -7,3 +7,4 @@ pip3 install -r requirements.txt
 git submodule update --init --recursive
 ./common/scripts/install-dependencies.sh
 sudo ./scripts/install-anna.sh
+./scripts/build.sh
