@@ -18,7 +18,6 @@ while True:
     socks = dict(poller.poll(timeout=1000))
     
     if socket in socks and socks[socket] == zmq.POLLIN:
-        msg = socket.recv_string()
         message = socket.recv()
         print("Received request: %s" % message)
 
