@@ -336,6 +336,7 @@ class CloudburstConnection():
 
         try:
             result = sckt.recv_string()
+            print("Received CONNECT response: %s" % result)
             return result
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:

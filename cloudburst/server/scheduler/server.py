@@ -166,6 +166,7 @@ def scheduler(ip, mgmt_ip, route_addr, policy_type):
 
         if connect_socket in socks and socks[connect_socket] == zmq.POLLIN:
             msg = connect_socket.recv_string()
+            print("Received CONNECT request: %s" % msg)
             connect_socket.send_string(route_addr)
 
         if (func_create_socket in socks and
