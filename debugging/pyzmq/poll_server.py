@@ -7,9 +7,12 @@
 import time
 import zmq
 
+BIND_ADDR_TEMPLATE = 'tcp://*:%d'
+CONNECT_PORT = 5000
+
 context = zmq.Context()
 socket = context.socket(zmq.REP)
-socket.bind("tcp://*:5555")
+socket.bind(BIND_ADDR_TEMPLATE % (CONNECT_PORT))
 poller = zmq.Poller()
 poller.register(socket, zmq.POLLIN)
 
