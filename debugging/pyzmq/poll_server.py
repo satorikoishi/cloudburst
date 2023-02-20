@@ -18,11 +18,11 @@ while True:
     socks = dict(poller.poll(timeout=1000))
     
     if socket in socks and socks[socket] == zmq.POLLIN:
-        message = socket.recv()
+        message = socket.recv_string()
         print("Received request: %s" % message)
 
         #  Do some 'work'
         time.sleep(1)
 
         #  Send reply back to client
-        socket.send(b"World")
+        socket.send_string("World")
