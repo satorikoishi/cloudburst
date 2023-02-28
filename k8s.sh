@@ -1,7 +1,7 @@
 sudo apt-get update
 
 # docker
-sudo apt-get install \
+sudo apt-get install -y \
     ca-certificates \
     curl \
     gnupg \
@@ -13,17 +13,17 @@ echo \
   $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
 
 sudo apt-get update
-sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
 
 # config
 sudo swapoff -a
-echo '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc] \
-  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options] \
+echo '[plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc]
+  [plugins."io.containerd.grpc.v1.cri".containerd.runtimes.runc.options]
     SystemdCgroup = true' > config.toml
 sudo mv config.toml /etc/containerd/config.toml
 sudo systemctl restart containerd
 
-cat > /etc/docker/daemon.json <<EOF
+echo '
 {
   "exec-opts": ["native.cgroupdriver=systemd"],
   "log-driver": "json-file",
@@ -34,13 +34,12 @@ cat > /etc/docker/daemon.json <<EOF
   "storage-opts": [
     "overlay2.override_kernel_check=true"
   ]
-}
-EOF
+}' > daemon.json
+sudo mv daemon.json /etc/docker/daemon.json
+sudo mkdir -p /etc/systemd/system/docker.service.d
 
-mkdir -p /etc/systemd/system/docker.service.d
-
-systemctl daemon-reload
-systemctl restart docker
+sudo systemctl daemon-reload
+sudo systemctl restart docker
 
 # k8s
 sudo apt-get install -y apt-transport-https ca-certificates curl
