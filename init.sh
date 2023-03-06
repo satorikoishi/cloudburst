@@ -17,3 +17,5 @@ git clone --recurse-submodules https://github.com/satorikoishi/anna.git
 cd anna
 ./scripts/build.sh -g
 cd ..
+
+export HYDRO_HOME=~
