@@ -5,7 +5,7 @@ executor:
     - 127.0.0.1
   thread_id: 0
 scheduler:
-  routing_address: 127.0.0.1
+  routing_address: 10.10.1.2
   metric_address: 127.0.0.1
   policy: locality
 benchmark:
