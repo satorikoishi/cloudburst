@@ -15,10 +15,6 @@ cd ..
 # anna
 git clone --recurse-submodules https://github.com/satorikoishi/anna.git
 cd anna
-./scripts/build.sh -g -j8
+git checkout f3ae84d
+./scripts/build.sh -g
 cd ..
-
-# cluster
-git clone --recurse-submodules https://github.com/satorikoishi/cluster.git
-
-echo 'export HYDRO_HOME=~' >> ~/.bashrc
