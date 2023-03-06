@@ -94,7 +94,8 @@ def executor(ip, mgmt_ip, schedulers, thread_id):
         client = AnnaIpcClient(thread_id, context)
         local = False
     else:
-        client = AnnaTcpClient('127.0.0.1', '127.0.0.1', local=True, offset=1)
+        # TODO: currently fixed route ip: 10.10.1.2
+        client = AnnaTcpClient('10.10.1.2', ip, local=True, offset=1)
         local = True
 
     user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
