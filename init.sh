@@ -18,4 +18,7 @@ cd anna
 ./scripts/build.sh -g
 cd ..
 
+# cluster
+git clone --recurse-submodules https://github.com/satorikoishi/cluster.git
+
 export HYDRO_HOME=~
