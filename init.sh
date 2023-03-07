@@ -21,4 +21,4 @@ cd ..
 # cluster
 git clone --recurse-submodules https://github.com/satorikoishi/cluster.git
 
-export HYDRO_HOME=~
+echo 'export HYDRO_HOME=~' >> ~/.bashrc
