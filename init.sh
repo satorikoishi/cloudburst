@@ -15,7 +15,7 @@ cd ..
 # anna
 git clone --recurse-submodules https://github.com/satorikoishi/anna.git
 cd anna
-./scripts/build.sh -g
+./scripts/build.sh -g -j8
 cd ..
 
 # cluster
