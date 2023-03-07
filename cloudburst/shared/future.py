@@ -20,9 +20,9 @@ class CloudburstFuture():
         self.serializer = serializer
 
     def get(self):
-        obj = self.kvs_client.get(self.obj_id)[self.obj_id]
+        obj = self.kvs_client.get(self.obj_id)
 
         while obj is None:
-            obj = self.kvs_client.get(self.obj_id)[self.obj_id]
+            obj = self.kvs_client.get(self.obj_id)
 
         return self.serializer.load_lattice(obj)

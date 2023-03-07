@@ -15,7 +15,7 @@
 import logging
 
 import zmq
-from anna.client import AnnaTcpClient
+from redis import Redis;
 
 from cloudburst.shared.function import CloudburstFunction
 from cloudburst.shared.future import CloudburstFuture
@@ -39,6 +39,7 @@ from cloudburst.shared.utils import (
     FUNC_CREATE_PORT,
     LIST_PORT
 )
+from cloudburst.shared.kvs_client import KvsClient
 
 serializer = Serializer()
 
@@ -67,8 +68,9 @@ class CloudburstConnection():
 
         # Picks a random offset of 10, mostly to alleviate port conflicts when
         # running in local mode.
-        self.kvs_client = AnnaTcpClient(kvs_addr, ip, local=local,
-                                        offset=tid + 10)
+        # self.kvs_client = AnnaTcpClient(kvs_addr, ip, local=local,
+        #                                 offset=tid + 10)
+        self.kvs_client = KvsClient(typ=Redis, args={'host': 'localhost', 'port': 6379, 'db': 0})
 
         self.func_create_sock = self.context.socket(zmq.REQ)
         self.func_create_sock.connect(self.service_addr % FUNC_CREATE_PORT)
@@ -300,7 +302,7 @@ class CloudburstConnection():
         Retrieves an arbitrary key from the KVS, automatically deserializes it,
         and returns the value to the user.
         '''
-        lattice = self.kvs_client.get(key)[key]
+        lattice = self.kvs_client.get(key)
         return serializer.load_lattice(lattice)
 
     def put_object(self, key, value):
