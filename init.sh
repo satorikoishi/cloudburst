@@ -5,7 +5,7 @@ cd ~
 # cloudburst
 git clone https://github.com/satorikoishi/cloudburst.git
 cd cloudburst
-git checkout redis-support # temporary for this branch
+git checkout feature/redis-support # temporary for this branch
 pip3 install -r requirements.txt
 git submodule update --init --recursive
 ./common/scripts/install-dependencies.sh
