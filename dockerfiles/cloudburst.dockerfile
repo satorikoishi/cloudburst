@@ -16,14 +16,14 @@ FROM hydroproject/base:latest
 
 MAINTAINER Vikram Sreekanti <vsreekanti@gmail.com> version: 0.1
 
-ARG repo_org=hydro-project
+ARG repo_org=satorikoishi
 ARG source_branch=master
 ARG build_branch=docker-build
 
 USER root
 
 # Download latest version of the code from relevant repository & branch -- if
-# none are specified, we use hydro-project/cloudburst by default. Install the KVS
+# none are specified, we use satorikoishi/cloudburst by default. Install the KVS
 # client from the Anna project.
 WORKDIR $HYDRO_HOME/cloudburst
 RUN git remote remove origin && git remote add origin https://github.com/$repo_org/cloudburst
@@ -33,7 +33,7 @@ RUN rm -rf /usr/lib/python3/dist-packages/PyYAML-*
 RUN pip3 install -r requirements.txt
 WORKDIR $HYDRO_HOME
 RUN rm -rf anna
-RUN git clone --recurse-submodules https://github.com/hydro-project/anna
+RUN git clone --recurse-submodules https://github.com/satorikoishi/anna
 WORKDIR anna
 RUN cd client/python && python3.6 setup.py install
 WORKDIR /
