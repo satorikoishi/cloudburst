@@ -40,7 +40,7 @@ from cloudburst.shared.serializer import Serializer
 serializer = Serializer()
 
 
-def exec_function(exec_socket, kvs, user_library, cache, function_cache):
+def exec_function(exec_socket, kvs, user_states_kvs, user_library, cache, function_cache):
     call = FunctionCall()
     call.ParseFromString(exec_socket.recv())
 
@@ -63,12 +63,12 @@ def exec_function(exec_socket, kvs, user_library, cache, function_cache):
         function_cache[call.name] = f
         try:
             if call.consistency == NORMAL:
-                result = _exec_func_normal(kvs, f, fargs, user_library, cache)
+                result = _exec_func_normal(user_states_kvs, f, fargs, user_library, cache)
                 logging.info('Finished executing %s: %s!' % (call.name,
                                                              str(result)))
             else:
                 dependencies = {}
-                result = _exec_func_causal(kvs, f, fargs, user_library,
+                result = _exec_func_causal(user_states_kvs, f, fargs, user_library,
                                            dependencies=dependencies)
         except Exception as e:
             logging.exception('Unexpected error %s while executing function.' %
@@ -78,18 +78,18 @@ def exec_function(exec_socket, kvs, user_library, cache, function_cache):
 
     if call.consistency == NORMAL:
         result = serializer.dump_lattice(result)
-        succeed = kvs.put(call.response_key, result)
+        succeed = user_states_kvs.put(call.response_key, result)
     else:
         result = serializer.dump_lattice(result, MultiKeyCausalLattice,
                                          causal_dependencies=dependencies)
-        succeed = kvs.causal_put(call.response_key, result)
+        succeed = user_states_kvs.causal_put(call.response_key, result)
 
     if not succeed:
         logging.info(f'Unsuccessful attempt to put key {call.response_key} '
                      + 'into the KVS.')
 
 
-def _exec_func_normal(kvs, func, args, user_lib, cache):
+def _exec_func_normal(user_states_kvs, func, args, user_lib, cache):
     # NOTE: We may not want to keep this permanently but need it for
     # continuations if the upstream function returns multiple things.
     processed = tuple()
@@ -114,17 +114,17 @@ def _exec_func_normal(kvs, func, args, user_lib, cache):
         refs = list(filter(lambda a: isinstance(a, CloudburstReference), args))
 
     if refs:
-        refs = _resolve_ref_normal(refs, kvs, cache)
+        refs = _resolve_ref_normal(refs, user_states_kvs, cache)
 
     return _run_function(func, refs, args, user_lib)
 
 
-def _exec_func_causal(kvs, func, args, user_lib, schedule=None,
+def _exec_func_causal(user_states_kvs, func, args, user_lib, schedule=None,
                       key_version_locations={}, dependencies={}):
     refs = list(filter(lambda a: isinstance(a, CloudburstReference), args))
 
     if refs:
-        refs = _resolve_ref_causal(refs, kvs, schedule, key_version_locations,
+        refs = _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
                                    dependencies)
 
     return _run_function(func, refs, args, user_lib)
@@ -156,7 +156,7 @@ def _run_function(func, refs, args, user_lib):
     return func(*func_args)
 
 
-def _resolve_ref_normal(refs, kvs, cache):
+def _resolve_ref_normal(refs, user_states_kvs, cache):
     deserialize_map = {}
     kv_pairs = {}
     keys = set()
@@ -171,12 +171,12 @@ def _resolve_ref_normal(refs, kvs, cache):
     keys = list(keys)
 
     if len(keys) != 0:
-        returned_kv_pairs = kvs.get(keys)
+        returned_kv_pairs = user_states_kvs.get_list(keys)
 
         # When chaining function executions, we must wait, so we check to see
         # if certain values have not been resolved yet.
         while None in returned_kv_pairs.values():
-            returned_kv_pairs = kvs.get(keys)
+            returned_kv_pairs = user_states_kvs.get(keys)
 
         for key in keys:
             # Because references might be repeated, we check to make sure that
@@ -193,7 +193,7 @@ def _resolve_ref_normal(refs, kvs, cache):
     return kv_pairs
 
 
-def _resolve_ref_causal(refs, kvs, schedule, key_version_locations,
+def _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
                         dependencies):
     if schedule:
         future_read_set = _compute_children_read_set(schedule)
@@ -205,12 +205,12 @@ def _resolve_ref_causal(refs, kvs, schedule, key_version_locations,
         consistency = MULTI
 
     keys = [ref.key for ref in refs]
-    (address, versions), kv_pairs = kvs.causal_get(keys, future_read_set,
+    (address, versions), kv_pairs = user_states_kvs.causal_get(keys, future_read_set,
                                                    key_version_locations,
                                                    consistency, client_id)
 
     while None in kv_pairs.values():
-        (address, versions), kv_pairs = kvs.causal_get(keys, future_read_set,
+        (address, versions), kv_pairs = user_states_kvs.causal_get(keys, future_read_set,
                                                        key_version_locations,
                                                        consistency, client_id)
     if address is not None:

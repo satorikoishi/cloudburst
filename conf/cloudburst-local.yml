@@ -1,5 +1,6 @@
 ip: 10.10.1.1
 mgmt_ip: NULL
+user_states_ip: 127.0.0.1
 executor:
   scheduler_ips:
     - 10.10.1.1

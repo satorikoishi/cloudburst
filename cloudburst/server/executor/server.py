@@ -27,6 +27,7 @@ from cloudburst.server.executor.call import exec_function, exec_dag_function
 from cloudburst.server.executor.pin import pin, unpin
 from cloudburst.server.executor.user_library import CloudburstUserLibrary
 from cloudburst.shared.anna_ipc_client import AnnaIpcClient
+from cloudburst.shared.kvs_client import RedisKvsClient
 from cloudburst.shared.proto.cloudburst_pb2 import (
     DagSchedule,
     DagTrigger,
@@ -42,7 +43,7 @@ REPORT_THRESH = 5
 BATCH_SIZE_MAX = 20
 
 
-def executor(ip, mgmt_ip, schedulers, thread_id):
+def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
     logging.basicConfig(filename='log_executor.txt', level=logging.INFO,
                         format='%(asctime)s %(message)s')
 
@@ -97,6 +98,8 @@ def executor(ip, mgmt_ip, schedulers, thread_id):
         # TODO: currently fixed route ip: 10.10.1.2
         client = AnnaTcpClient('10.10.1.2', ip, local=True, offset=1)
         local = True
+
+    states_client = RedisKvsClient(host=user_states_ip, port=6379, db=0)
 
     user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
                                       client)
@@ -185,7 +188,7 @@ def executor(ip, mgmt_ip, schedulers, thread_id):
 
         if exec_socket in socks and socks[exec_socket] == zmq.POLLIN:
             work_start = time.time()
-            exec_function(exec_socket, client, user_library, cache,
+            exec_function(exec_socket, client, states_client, user_library, cache,
                           function_cache)
             user_library.close()
 
@@ -501,5 +504,5 @@ if __name__ == '__main__':
     conf = sutils.load_conf(conf_file)
     exec_conf = conf['executor']
 
-    executor(conf['ip'], conf['mgmt_ip'], exec_conf['scheduler_ips'],
+    executor(conf['ip'], conf['mgmt_ip'], conf['user_states_ip'], exec_conf['scheduler_ips'],
              int(exec_conf['thread_id']))
