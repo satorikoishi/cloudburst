@@ -40,7 +40,7 @@ WORKDIR /
 
 # These installations are currently pipeline specific until we figure out a
 # better way to do package management for Python.
-RUN apt install libjpeg-dev zlib1g-dev
+RUN apt install -y libjpeg-dev zlib1g-dev
 RUN pip3 install tensorflow==1.12.0 tensorboard==1.12.2 scikit-image
 
 COPY start-cloudburst.sh /start-cloudburst.sh
