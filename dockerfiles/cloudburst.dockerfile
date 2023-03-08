@@ -46,6 +46,7 @@ RUN pip3 install tensorflow==1.12.0 tensorboard==1.12.2 scikit-image
 
 COPY start-cloudburst.sh /start-cloudburst.sh
 
+RUN pip3 install multidict attrs yarl async_timeout idna_ssl charset_normalizer aiosignal
 RUN pip3 install pandas s3fs 
 
 RUN touch a
