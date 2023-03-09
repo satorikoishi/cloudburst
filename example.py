@@ -20,5 +20,12 @@ print(f'result of stateless function call: {sq(3).get()}') # 9
 
 # stateful arguments
 local_cloud.put_object('key', 2)
-reference = CloudburstReference('key', True)
-print(f'result of function call with reference arguments: {sq(reference).get()}') # 4
+key_ref = CloudburstReference('key', True)
+print(f'result of function call with reference arguments: {sq(key_ref).get()}') # 4
+
+# dag
+local_cloud.register_dag('dag', ['square'], [])
+local_cloud.put_object('dag_param', 10)
+dag_param_ref = CloudburstReference('dag_param', True)
+res = local_cloud.call_dag('dag', { 'square': [dag_param_ref] }).get()
+print(f'result of DAG call: {res}') # 100

@@ -248,13 +248,13 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
 
                     if fname not in function_cache:
                         logging.error('%s not in function cache', fname)
-                        utils.generate_error_response(schedule, client, fname)
+                        utils.generate_error_response(schedule, states_client, fname)
                         continue
 
                     # We don't support actual batching for when we receive a
                     # schedule before a trigger, so everything is just a batch of
                     # size 1 if anything.
-                    success = exec_dag_function(pusher_cache, client,
+                    success = exec_dag_function(pusher_cache, client, states_client,
                                                 [triggers], function_cache[fname],
                                                 [schedule], user_library,
                                                 dag_runtimes, cache, schedulers,
@@ -352,7 +352,7 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
 
                     if fname not in function_cache:
                         logging.error('%s not in function cache', fname)
-                        utils.generate_error_response(schedule, client, fname)
+                        utils.generate_error_response(schedule, states_client, fname)
                         continue
 
                     trigger_sets.append(triggers)
@@ -365,7 +365,7 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
             # whether to pass lists into the fn or not.
             if len(trigger_sets) > 0:
                 successes = exec_dag_function(pusher_cache, client,
-                                              trigger_sets,
+                                              states_client, trigger_sets,
                                               function_cache[fname],
                                               schedules, user_library,
                                               dag_runtimes, cache,

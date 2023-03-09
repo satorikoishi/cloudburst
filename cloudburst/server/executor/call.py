@@ -244,10 +244,10 @@ def _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
     return kv_pairs
 
 
-def exec_dag_function(pusher_cache, kvs, trigger_sets, function, schedules,
+def exec_dag_function(pusher_cache, kvs, user_states_kvs, trigger_sets, function, schedules,
                       user_library, dag_runtimes, cache, schedulers, batching):
     if schedules[0].consistency == NORMAL:
-        finished, successes = _exec_dag_function_normal(pusher_cache, kvs,
+        finished, successes = _exec_dag_function_normal(pusher_cache, user_states_kvs,
                                                         trigger_sets, function,
                                                         schedules,
                                                         user_library, cache,
@@ -285,7 +285,7 @@ def _construct_trigger(sid, fname, result):
     return trigger
 
 
-def _exec_dag_function_normal(pusher_cache, kvs, trigger_sets, function,
+def _exec_dag_function_normal(pusher_cache, user_states_kvs, trigger_sets, function,
                               schedules, user_lib, cache, schedulers,
                               batching):
     fname = schedules[0].target_function
@@ -310,7 +310,7 @@ def _exec_dag_function_normal(pusher_cache, kvs, trigger_sets, function,
     else: # There will only be one thing in farg_sets
         fargs = farg_sets[0]
 
-    result_list = _exec_func_normal(kvs, function, fargs, user_lib, cache)
+    result_list = _exec_func_normal(user_states_kvs, function, fargs, user_lib, cache)
     if not isinstance(result_list, list):
         result_list = [result_list]
 
@@ -374,14 +374,14 @@ def _exec_dag_function_normal(pusher_cache, kvs, trigger_sets, function,
 
                     keys.append(output_key)
                     lattices.append(lattice)
-            kvs.put(keys, lattices)
+            user_states_kvs.put_list(keys, lattices)
 
     return is_sink, successes
 
 
 # Causal mode does not currently support batching, so there should only ever be
 # one trigger set and oone schedule.
-def _exec_dag_function_causal(pusher_cache, kvs, triggers, function, schedule,
+def _exec_dag_function_causal(pusher_cache, user_states_kvs, triggers, function, schedule,
                               user_lib):
     schedule = schedule[0]
     triggers = triggers[0]
@@ -417,7 +417,7 @@ def _exec_dag_function_causal(pusher_cache, kvs, triggers, function, schedule,
 
     fargs = [serializer.load(arg) for arg in fargs]
 
-    result = _exec_func_causal(kvs, function, fargs, user_lib, schedule,
+    result = _exec_func_causal(user_states_kvs, function, fargs, user_lib, schedule,
                                key_version_locations, dependencies)
 
     this_ref = None
@@ -478,10 +478,10 @@ def _exec_dag_function_causal(pusher_cache, kvs, triggers, function, schedule,
         lattice = MultiKeyCausalLattice(vector_clock, dependencies,
                                         SetLattice({result}))
 
-        succeed = kvs.causal_put(schedule.output_key,
+        succeed = user_states_kvs.causal_put(schedule.output_key,
                                  lattice, schedule.client_id)
         while not succeed:
-            succeed = kvs.causal_put(schedule.output_key,
+            succeed = user_states_kvs.causal_put(schedule.output_key,
                                      lattice, schedule.client_id)
 
         # Issues requests to all upstream caches for this particular request

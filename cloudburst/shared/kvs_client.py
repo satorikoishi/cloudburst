@@ -16,6 +16,9 @@ class AbstractKvsClient():
     def put(self, key, val):
         raise NotImplementedError
 
+    def put_list(self, keys, vals):
+        raise NotImplementedError
+
 class AnnaKvsClient(AbstractKvsClient):
     def __init__(self, kvs_addr, ip, local, offset):
         self.client = AnnaTcpClient(kvs_addr, ip, local=local, offset=offset)
@@ -28,6 +31,9 @@ class AnnaKvsClient(AbstractKvsClient):
 
     def put(self, key, val):
         return self.client.put(key, val)
+    
+    def put_list(self, keys, vals):
+        return self.client.put(keys, vals)
 
 class AnnaIpcKvsClient(AbstractKvsClient):
     def __init__(self, thread_id, context):
@@ -45,6 +51,9 @@ class AnnaIpcKvsClient(AbstractKvsClient):
     def put(self, key, val):
         return self.client.put(key, val)
 
+    def put_list(self, keys, vals):
+        return self.client.put(keys, vals)
+
 class RedisKvsClient(AbstractKvsClient):
     def __init__(self, host, port, db):
         self.client = Redis(host=host, port=port, db=db)
@@ -54,10 +63,15 @@ class RedisKvsClient(AbstractKvsClient):
         return serializer.load(result) if result is not None else None
 
     def get_list(self, keys):
-        values = map(serializer.load, self.client.mget(keys))
-        return dict(zip(keys, values)) # return kv pairs
+        deserialized_vals = map(serializer.load, self.client.mget(keys))
+        return dict(zip(keys, deserialized_vals)) # return kv pairs
 
     def put(self, key, val):
         data =  serializer.dump(val)
-        return self.client.set(key, data)  
+        return self.client.set(key, data) 
+
+    def put_list(self, keys, vals):
+        serialized_vals = map(serializer.dump, vals)
+        kv_dict = dict(zip(keys, serialized_vals))
+        return self.client.mset(kv_dict)
 
