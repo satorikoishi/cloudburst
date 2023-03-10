@@ -126,3 +126,82 @@ class CloudburstUserLibrary(AbstractCloudburstUserLibrary):
         # Closes the context for this request by clearing any outstanding
         # messages.
         self.recv()
+
+class KvsUserLibrary(AbstractCloudburstUserLibrary):
+    # ip: Executor IP.
+    # tid: Executor thread ID.
+    # client: The kvs client, used for interfacing with the kvs.
+    def __init__(self, context, pusher_cache, ip, tid, client):
+        self.executor_ip = ip
+        self.executor_tid = tid
+        self.client = client
+
+        self.pusher_cache = pusher_cache
+
+        self.address = sutils.BIND_ADDR_TEMPLATE % (sutils.RECV_INBOX_PORT +
+                                                    self.executor_tid)
+
+        # Socket on which inbound messages, if any, will be received.
+        self.recv_inbox_socket = context.socket(zmq.PULL)
+        self.recv_inbox_socket.bind(self.address)
+
+    def put(self, ref, value):
+        return self.client.put(ref, serializer.dump_lattice(value))
+
+    def get(self, ref, deserialize=True):
+        refs = ref if type(ref) == list else [ref]
+
+        kv_pairs = self.client.get_list(refs)
+        result = {}
+
+        # Deserialize each of the lattice objects and return them to the
+        # client.
+        for key in kv_pairs:
+            if kv_pairs[key] is None:
+                # If the key is not in the kvs, we can just return None.
+                result[key] = None
+            else:
+                if deserialize:
+                    result[key] = serializer.load_lattice(kv_pairs[key])
+                else:
+                    result[key] = kv_pairs[key].reveal()
+
+        return result if type(ref) == list else result[ref]
+
+    def getid(self):
+        return (self.executor_ip, self.executor_tid)
+
+    # dest is currently (IP string, thread id int) of destination executor.
+    def send(self, dest, bytestr):
+        ip, tid = dest
+        dest_addr = sutils.get_user_msg_inbox_addr(ip, tid)
+        sender = (self.executor_ip, self.executor_tid)
+
+        socket = self.pusher_cache.get(dest_addr)
+        socket.send_pyobj((sender, bytestr))
+
+    # We see if any messages have been sent to this thread. We return an empty
+    # list if there are none.
+    def recv(self):
+        res = []
+        while True:
+            try:
+                # We pass in zmq.NOBLOCK here so that we only check for
+                # messages that have already been received.
+                msg = self.recv_inbox_socket.recv_pyobj(zmq.NOBLOCK)
+                res.append(msg)
+            except zmq.ZMQError as e:
+                # ZMQ will throw an EAGAIN error with a timeout if there are no
+                # pending messages. If that's the case, that means that there
+                # are no more messages to be received.
+                if e.errno == zmq.EAGAIN:
+                    break
+                else:
+                    raise e
+
+        return res
+
+    def close(self):
+        # Closes the context for this request by clearing any outstanding
+        # messages.
+        self.recv()

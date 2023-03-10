@@ -5,8 +5,8 @@ local_cloud = CloudburstConnection('127.0.0.1', '127.0.0.1', local=True)
 
 # put and get states
 for i in range(5):
-    print(f"putting value of key {i}: {i*2}")
-    local_cloud.put_object(i, i*2)
+    print(f"putting value of key {i}: {i*5}")
+    local_cloud.put_object(i, i*5)
 
 for i in range(5):
     result = local_cloud.get_object(i)
@@ -29,3 +29,14 @@ local_cloud.put_object('dag_param', 10)
 dag_param_ref = CloudburstReference('dag_param', True)
 res = local_cloud.call_dag('dag', { 'square': [dag_param_ref] }).get()
 print(f'result of DAG call: {res}') # 100
+
+# user_library
+def library_test(user_lib, x):
+    res = user_lib.get(x)
+    user_lib.put(x, res+100)
+    return res
+lib_test = local_cloud.register(library_test, 'lib_test')
+res = lib_test(key_ref).get()
+print(f'result of get key 2 (resolved from key_ref) using user_library: {res}') # 10
+print(f"value of key 2 after library_test: {local_cloud.get_object(2)}") # 110
+

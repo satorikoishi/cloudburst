@@ -25,7 +25,7 @@ from cloudburst.server import utils as sutils
 from cloudburst.server.executor import utils
 from cloudburst.server.executor.call import exec_function, exec_dag_function
 from cloudburst.server.executor.pin import pin, unpin
-from cloudburst.server.executor.user_library import CloudburstUserLibrary
+from cloudburst.server.executor.user_library import CloudburstUserLibrary, KvsUserLibrary
 from cloudburst.shared.anna_ipc_client import AnnaIpcClient
 from cloudburst.shared.kvs_client import RedisKvsClient
 from cloudburst.shared.proto.cloudburst_pb2 import (
@@ -101,8 +101,9 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
 
     states_client = RedisKvsClient(host=user_states_ip, port=6379, db=0)
 
-    user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
-                                      client)
+    # user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
+    #                                   client)
+    user_library = KvsUserLibrary(context, pusher_cache, ip, thread_id, states_client)
 
     status = ThreadStatus()
     status.ip = ip
