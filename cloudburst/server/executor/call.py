@@ -50,6 +50,9 @@ def exec_function(exec_socket, kvs, user_library, cache, function_cache):
         f = function_cache[call.name]
     else:
         f = utils.retrieve_function(call.name, kvs, user_library, call.consistency)
+    
+    f_type = type(f)
+    logging.info(f'Exec function {f}, type: {f_type}')
 
     if not f:
         logging.info('Function %s not found! Returning an error.' %
