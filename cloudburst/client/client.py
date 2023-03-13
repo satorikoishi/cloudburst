@@ -39,7 +39,7 @@ from cloudburst.shared.utils import (
     FUNC_CREATE_PORT,
     LIST_PORT
 )
-from cloudburst.shared.kvs_client import RedisKvsClient
+from cloudburst.shared.kvs_client import RedisKvsClient, ShredderKvsClient
 
 serializer = Serializer()
 
@@ -70,7 +70,8 @@ class CloudburstConnection():
         # running in local mode.
         # self.kvs_client = AnnaTcpClient(kvs_addr, ip, local=local,
         #                                 offset=tid + 10)
-        self.kvs_client = RedisKvsClient(host=kvs_addr, port=6379, db=0)
+        # self.kvs_client = RedisKvsClient(host=kvs_addr, port=6379, db=0)
+        self.kvs_client = ShredderKvsClient(host=kvs_addr, port=6379, db=0)
 
         self.func_create_sock = self.context.socket(zmq.REQ)
         self.func_create_sock.connect(self.service_addr % FUNC_CREATE_PORT)

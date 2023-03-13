@@ -75,3 +75,24 @@ class RedisKvsClient(AbstractKvsClient):
         kv_dict = dict(zip(keys, serialized_vals))
         return self.client.mset(kv_dict)
 
+class ShredderKvsClient(AbstractKvsClient):
+    def __init__(self, host, port, db):
+        self.client = Redis(host=host, port=port, db=db)
+
+    def get(self, key):
+        result = self.client.get(key)
+        return serializer.load(result) if result is not None else None
+
+    # Shredder does not support `mget` operation temporarily
+    def get_list(self, keys):
+        values = map(self.get, keys)
+        return dict(zip(keys, values))
+
+    def put(self, key, val):
+        data =  serializer.dump(val)
+        return self.client.set(key, data) 
+
+    # Shredder does not support `mset` operation temporarily
+    def put_list(self, keys, vals):
+        return list(map(self.put, keys, vals))
+

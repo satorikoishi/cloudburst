@@ -27,7 +27,7 @@ from cloudburst.server.executor.call import exec_function, exec_dag_function
 from cloudburst.server.executor.pin import pin, unpin
 from cloudburst.server.executor.user_library import CloudburstUserLibrary, KvsUserLibrary
 from cloudburst.shared.anna_ipc_client import AnnaIpcClient
-from cloudburst.shared.kvs_client import RedisKvsClient
+from cloudburst.shared.kvs_client import RedisKvsClient, ShredderKvsClient
 from cloudburst.shared.proto.cloudburst_pb2 import (
     DagSchedule,
     DagTrigger,
@@ -99,7 +99,8 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
         client = AnnaTcpClient('10.10.1.2', ip, local=True, offset=1)
         local = True
 
-    states_client = RedisKvsClient(host=user_states_ip, port=6379, db=0)
+    # states_client = RedisKvsClient(host=user_states_ip, port=6379, db=0)
+    states_client = ShredderKvsClient(host=user_states_ip, port=6379, db=0)
 
     # user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
     #                                   client)
