@@ -45,6 +45,8 @@ def benchmark(ip, cloudburst_address, tid):
 
     while True:
         msg = benchmark_start_socket.recv_string()
+        
+        logging.info(f'Received msg: {msg}')
         splits = msg.split(':')
 
         resp_addr = splits[0]
@@ -54,6 +56,8 @@ def benchmark(ip, cloudburst_address, tid):
             create = bool(splits[3])
         else:
             create = False
+            
+        logging.info(f'Received req from {resp_addr}, bench: {bname}, num_req: {num_requests}')
 
         sckt = ctx.socket(zmq.PUSH)
         sckt.connect('tcp://' + resp_addr + ':3000')
