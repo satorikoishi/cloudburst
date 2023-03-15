@@ -96,3 +96,6 @@ class ShredderKvsClient(AbstractKvsClient):
     def put_list(self, keys, vals):
         return list(map(self.put, keys, vals))
 
+    def execute_command(self, *args):
+        return self.client.execute_command(*args)
+

@@ -205,3 +205,7 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
         # Closes the context for this request by clearing any outstanding
         # messages.
         self.recv()
+
+    def execute_js_fun(self, name, *args):
+        return self.client.execute_command("JS", name, *args)
+    

@@ -40,3 +40,17 @@ res = lib_test(key_ref).get()
 print(f'result of get key 2 (resolved from key_ref) using user_library: {res}') # 10
 print(f"value of key 2 after library_test: {local_cloud.get_object(2)}") # 110
 
+# execute js function remotely
+def shredder_example(user_lib):
+    results_list = []
+    results_list.append(user_lib.execute_js_fun('setup'))
+    results_list.append(user_lib.execute_js_fun('get', '0'))
+    results_list.append(user_lib.execute_js_fun('count_friend_list', '0', '1'))
+    results_list.append(user_lib.execute_js_fun('predict'))
+    return results_list
+
+execute_js_test = local_cloud.register(shredder_example, 'shredder_example')
+res = execute_js_test().get()
+for r in res:
+    print(r)
+
