@@ -39,7 +39,7 @@ from cloudburst.shared.utils import (
     FUNC_CREATE_PORT,
     LIST_PORT
 )
-from cloudburst.shared.kvs_client import RedisKvsClient, ShredderKvsClient
+from cloudburst.shared.kvs_client import AnnaKvsClient, ShredderKvsClient
 
 serializer = Serializer()
 
@@ -60,18 +60,17 @@ class CloudburstConnection():
         self.service_addr = 'tcp://' + func_addr + ':%d'
         self.context = zmq.Context(1)
 
-        kvs_addr = self._connect()
-        while not kvs_addr:
+        kvs_addr, states_addr = self._connect()
+        while not kvs_addr or not states_addr:
             logging.info('Connection timed out, retrying')
             print('Connection timed out, retrying')
-            kvs_addr = self._connect()
+            kvs_addr, states_addr = self._connect()
 
         # Picks a random offset of 10, mostly to alleviate port conflicts when
         # running in local mode.
-        # self.kvs_client = AnnaTcpClient(kvs_addr, ip, local=local,
-        #                                 offset=tid + 10)
-        # self.kvs_client = RedisKvsClient(host=kvs_addr, port=6379, db=0)
-        self.kvs_client = ShredderKvsClient(host=kvs_addr, port=6379, db=0)
+        self.kvs_client = AnnaKvsClient(kvs_addr, ip, local=local,
+                                        offset=tid + 10)
+        self.states_client = ShredderKvsClient(host=states_addr, port=6379, db=0)
 
         self.func_create_sock = self.context.socket(zmq.REQ)
         self.func_create_sock.connect(self.service_addr % FUNC_CREATE_PORT)
@@ -303,7 +302,7 @@ class CloudburstConnection():
         Retrieves an arbitrary key from the KVS, automatically deserializes it,
         and returns the value to the user.
         '''
-        lattice = self.kvs_client.get(key)
+        lattice = self.states_client.get(key)
         return serializer.load_lattice(lattice)
 
     def put_object(self, key, value):
@@ -312,7 +311,7 @@ class CloudburstConnection():
         key-value store at the desired key.
         '''
         lattice = serializer.dump_lattice(value)
-        return self.kvs_client.put(key, lattice)
+        return self.states_client.put(key, lattice)
 
     def exec_func(self, name, args):
         call = FunctionCall()
@@ -341,8 +340,9 @@ class CloudburstConnection():
 
         try:
             result = sckt.recv_string()
-            print("Received CONNECT response: %s" % result)
-            return result
+            anna_ip, states_ip = result.split('#')
+            print("Received CONNECT response: %s, %s" % (anna_ip, states_ip))
+            return anna_ip, states_ip
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:
                 return None

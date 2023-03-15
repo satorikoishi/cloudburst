@@ -78,11 +78,11 @@ def exec_function(exec_socket, kvs, user_states_kvs, user_library, cache, functi
 
     if call.consistency == NORMAL:
         result = serializer.dump_lattice(result)
-        succeed = user_states_kvs.put(call.response_key, result)
+        succeed = kvs.put(call.response_key, result)
     else:
         result = serializer.dump_lattice(result, MultiKeyCausalLattice,
                                          causal_dependencies=dependencies)
-        succeed = user_states_kvs.causal_put(call.response_key, result)
+        succeed = kvs.causal_put(call.response_key, result)
 
     if not succeed:
         logging.info(f'Unsuccessful attempt to put key {call.response_key} '
@@ -247,7 +247,7 @@ def _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
 def exec_dag_function(pusher_cache, kvs, user_states_kvs, trigger_sets, function, schedules,
                       user_library, dag_runtimes, cache, schedulers, batching):
     if schedules[0].consistency == NORMAL:
-        finished, successes = _exec_dag_function_normal(pusher_cache, user_states_kvs,
+        finished, successes = _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs,
                                                         trigger_sets, function,
                                                         schedules,
                                                         user_library, cache,
@@ -285,7 +285,7 @@ def _construct_trigger(sid, fname, result):
     return trigger
 
 
-def _exec_dag_function_normal(pusher_cache, user_states_kvs, trigger_sets, function,
+def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, function,
                               schedules, user_lib, cache, schedulers,
                               batching):
     fname = schedules[0].target_function
@@ -374,7 +374,7 @@ def _exec_dag_function_normal(pusher_cache, user_states_kvs, trigger_sets, funct
 
                     keys.append(output_key)
                     lattices.append(lattice)
-            user_states_kvs.put_list(keys, lattices)
+            kvs.put(keys, lattices)
 
     return is_sink, successes
 
