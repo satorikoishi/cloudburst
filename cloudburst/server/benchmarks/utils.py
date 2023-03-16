@@ -16,8 +16,12 @@ import logging
 
 import numpy as np
 
+unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
-def print_latency_stats(data, ident, log=False, epoch=0):
+def print_latency_stats(data, ident, log=False, epoch=0, unit='ms'):
+    # Amplify according to unit
+    data = [x * unit_dict[unit] for x in data]
+    
     npdata = np.array(data)
     tput = 0
 
@@ -38,11 +42,12 @@ def print_latency_stats(data, ident, log=False, epoch=0):
 
     output = ('%s LATENCY:\n\tsample size: %d\n' +
               '\tTHROUGHPUT: %.4f\n'
-              '\tmean: %.6f, median: %.6f\n' +
-              '\tmin/max: (%.6f, %.6f)\n' +
-              '\tp25/p75: (%.6f, %.6f)\n' +
-              '\tp5/p95: (%.6f, %.6f)\n' +
-              '\tp1/p99: (%.6f, %.6f)') % (ident, len(data), tput, mean,
+              '\tTime unit: %s\n'
+              '\tmean: %.3f, median: %.3f\n' +
+              '\tmin/max: (%.3f, %.3f)\n' +
+              '\tp25/p75: (%.3f, %.3f)\n' +
+              '\tp5/p95: (%.3f, %.3f)\n' +
+              '\tp1/p99: (%.3f, %.3f)') % (ident, len(data), tput, unit, mean,
                                            median, mn, mx, p25, p75, p05, p95,
                                            p01, p99)
 
