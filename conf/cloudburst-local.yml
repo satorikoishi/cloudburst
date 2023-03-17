@@ -1,14 +1,14 @@
-ip: 10.10.1.1
+ip: 127.0.0.1
 mgmt_ip: NULL
 user_states_ip: 127.0.0.1
 executor:
   scheduler_ips:
-    - 10.10.1.1
+    - 127.0.0.1
   thread_id: 0
 scheduler:
-  routing_address: 10.10.1.2
-  metric_address: 10.10.1.1
+  routing_address: 127.0.0.1
+  metric_address: 127.0.0.1
   policy: locality
 benchmark:
-  cloudburst_address: 10.10.1.1
+  cloudburst_address: 127.0.0.1
   thread_id: 0

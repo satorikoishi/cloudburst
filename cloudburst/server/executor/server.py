@@ -96,7 +96,7 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
         local = False
     else:
         # TODO: currently fixed route ip: 10.10.1.2
-        client = AnnaTcpClient('10.10.1.2', ip, local=True, offset=1)
+        client = AnnaTcpClient('127.0.0.1', '127.0.0.1', local=True, offset=1)
         local = True
 
     # states_client = RedisKvsClient(host=user_states_ip, port=6379, db=0)
