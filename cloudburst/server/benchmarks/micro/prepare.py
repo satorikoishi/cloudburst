@@ -39,6 +39,19 @@ def run(cloudburst_client, num_requests, sckt):
     else:
         print('Failed registered function.')
         sys.exit(1)
+        
+    def update_single(cloudburst, key):
+        arr = cloudburst.get(key).reveal()
+        arr[0] = arr[0] + 1
+        cloudburst.put(key, arr)
+        return arr[0]
+
+    cloud_update_single = cloudburst_client.register(update_single, 'update_single')
+    if cloud_update_single:
+        logging.info('Successfully registered function.')
+    else:
+        print('Failed registered function.')
+        sys.exit(1)
 
     logging.info('Function ready')
 
@@ -50,8 +63,22 @@ def run(cloudburst_client, num_requests, sckt):
             ref = CloudburstReference(key, True)
             res = cloud_read_single(ref).get()
             
+            # Read initial state: all zero
             arr = np.frombuffer(arr)
             if np.count_nonzero(arr):
+                print(f'Unexpected result {res}, {arr} from read_single, size: {size}, idx: {i}')
+                sys.exit(1)
+            
+            # Increment arr[0] by 1
+            res = cloud_update_single(ref).get()
+            if res != 1.0:
+                print(f'Unexpected result {res} from update_single, size: {size}, idx: {i}')
+                sys.exit(1)
+            
+            # Read again, arr[0] should be 1
+            res = cloud_read_single(ref).get()
+            arr = np.frombuffer(arr)
+            if np.count_nonzero(arr) != 1 or arr[0] != 1.0:
                 print(f'Unexpected result {res}, {arr} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
 
