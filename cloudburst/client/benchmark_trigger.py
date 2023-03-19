@@ -24,7 +24,7 @@ from cloudburst.server.benchmarks import utils
 logging.basicConfig(filename='log_trigger.txt', level=logging.INFO,
                     format='%(asctime)s %(message)s')
 
-NUM_THREADS = 4
+NUM_THREADS = 1
 
 ips = []
 with open('bench_ips.txt', 'r') as f:
@@ -37,13 +37,13 @@ msg = sys.argv[1]
 ctx = zmq.Context(1)
 
 recv_socket = ctx.socket(zmq.PULL)
-recv_socket.bind('tcp://*:3000')
+recv_socket.bind(f'tcp://*:{utils.TRIGGER_PORT}')
 
 sent_msgs = 0
 
 if 'create' in msg:
     sckt = ctx.socket(zmq.PUSH)
-    sckt.connect('tcp://' + ips[0] + ':3000')
+    sckt.connect('tcp://' + ips[0] + f':{utils.BENCHMARK_START_PORT}')
 
     sckt.send_string(msg)
     sent_msgs += 1
@@ -51,7 +51,7 @@ else:
     for ip in ips:
         for tid in range(NUM_THREADS):
             sckt = ctx.socket(zmq.PUSH)
-            sckt.connect('tcp://' + ip + ':' + str(3000 + tid))
+            sckt.connect('tcp://' + ip + ':' + str(utils.BENCHMARK_START_PORT + tid))
 
             sckt.send_string(msg)
             sent_msgs += 1

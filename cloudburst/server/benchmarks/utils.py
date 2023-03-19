@@ -16,6 +16,9 @@ import logging
 
 import numpy as np
 
+BENCHMARK_START_PORT = 3000
+TRIGGER_PORT = 2999
+
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
 def print_latency_stats(data, ident, log=False, epoch=0, unit='ms'):

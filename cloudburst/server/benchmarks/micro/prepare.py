@@ -9,8 +9,10 @@ import numpy as np
 from cloudburst.server.benchmarks.micro import meta
 from cloudburst.shared.reference import CloudburstReference
 
-def run(cloudburst_client, num_requests, create, sckt):        
-    assert(num_requests == 1)
+def run(cloudburst_client, num_requests, sckt):        
+    if num_requests != 1:
+        print(f'Prepare num request should be 1, received {num_requests}')
+        sys.exit(1)
 
     ''' PREPARE DATA '''
     for size in meta.ARR_SIZE:
@@ -33,8 +35,9 @@ def run(cloudburst_client, num_requests, create, sckt):
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
     if cloud_read_single:
-        print('Successfully registered function.')
+        logging.info('Successfully registered function.')
     else:
+        print('Failed registered function.')
         sys.exit(1)
 
     logging.info('Function ready')

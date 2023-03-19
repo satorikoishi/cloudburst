@@ -27,9 +27,11 @@ from cloudburst.server.benchmarks import (
     scaling,
     utils
 )
+from cloudburst.server.benchmarks.micro import (
+    micro_func,
+    prepare
+)
 import cloudburst.server.utils as sutils
-
-BENCHMARK_START_PORT = 3000
 
 logging.basicConfig(filename='log_benchmark.txt', level=logging.INFO,
                     format='%(asctime)s %(message)s')
@@ -40,7 +42,7 @@ def benchmark(ip, cloudburst_address, tid):
     ctx = zmq.Context(1)
 
     benchmark_start_socket = ctx.socket(zmq.PULL)
-    benchmark_start_socket.bind('tcp://*:' + str(BENCHMARK_START_PORT + tid))
+    benchmark_start_socket.bind('tcp://*:' + str(utils.BENCHMARK_START_PORT + tid))
     kvs = cloudburst.kvs_client
 
     while True:
@@ -53,18 +55,16 @@ def benchmark(ip, cloudburst_address, tid):
         bname = splits[1]
         num_requests = int(splits[2])
         if len(splits) > 3:
-            create = bool(splits[3])
-        else:
-            create = False
+            args = splits[3:]
             
         logging.info(f'Received req from {resp_addr}, bench: {bname}, num_req: {num_requests}')
 
         sckt = ctx.socket(zmq.PUSH)
-        sckt.connect('tcp://' + resp_addr + ':3000')
-        run_bench(bname, num_requests, cloudburst, kvs, sckt, create)
+        sckt.connect('tcp://' + resp_addr + f':{utils.TRIGGER_PORT}')
+        
+        run_bench(bname, num_requests, cloudburst, kvs, sckt, args)
 
-
-def run_bench(bname, num_requests, cloudburst, kvs, sckt, create=False):
+def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[],create=False):
     logging.info('Running benchmark %s, %d requests.' % (bname, num_requests))
 
     if bname == 'composition':
@@ -86,11 +86,20 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, create=False):
     elif bname == 'scaling':
         total, scheduler, kvs, retries = scaling.run(cloudburst, num_requests,
                                                      sckt, create)
+    elif bname == 'prepare':
+        total, scheduler, kvs, retries = prepare.run(cloudburst, num_requests,
+                                                     sckt)
+    elif bname == 'micro':
+        total, scheduler, kvs, retries = micro_func.run(cloudburst, num_requests,
+                                                     sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
         sckt.send(b'END')
         return
+    
+    summary_result(bname, sckt, total, scheduler, kvs, retries)
 
+def summary_result(bname, sckt, total, scheduler, kvs, retries):
     # some benchmark modes return no results
     if not total:
         sckt.send(b'END')
