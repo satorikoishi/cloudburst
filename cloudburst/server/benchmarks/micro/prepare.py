@@ -16,14 +16,14 @@ def run(cloudburst_client, num_requests, sckt):
 
     ''' PREPARE DATA '''
     for size in meta.ARR_SIZE:
-        arr = np.zeros(size)
-        mem_size = sys.getsizeof(arr)
-        logging.info(f'Created arr with {size} int objs, mem size {mem_size}')
+        init_arr = np.zeros(size)
+        mem_size = sys.getsizeof(init_arr)
+        logging.info(f'Created init_arr with {size} int objs, mem size {mem_size}')
         
         for i in range(meta.NUM_KV_PAIRS):
             # 1K kv pair for each size, key range [0, 1000) + size
             key = meta.key_gen(size, i)
-            cloudburst_client.put_object(key, arr)
+            cloudburst_client.put_object(key, init_arr)
 
     logging.info('Data ready')
 
