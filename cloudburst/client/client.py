@@ -316,6 +316,8 @@ class CloudburstConnection():
         call.name = name
         call.request_id = self.rid
 
+        if type(args) != list:
+            args = [args]
         for arg in args:
             argobj = call.arguments.values.add()
             serializer.dump(arg, argobj)
