@@ -30,9 +30,8 @@ def run(cloudburst_client, num_requests, sckt):
 
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key):
-        # arr = cloudburst.get(key)
-        # return arr.tobytes()
-        return key
+        arr = cloudburst.get(key)
+        return arr
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
     if cloud_read_single:
@@ -45,10 +44,7 @@ def run(cloudburst_client, num_requests, sckt):
         arr = cloudburst.get(key)
         arr[0] = arr[0] + 1
         cloudburst.put(key, arr)
-        
-        arr_typename = type(arr).__name__
-        a0_typename = type(arr[0]).__name__
-        return f'arr: {arr} of type {arr_typename}, a[0]: {arr[0]} of type {a0_typename}'
+        return arr[0] + 1
 
     cloud_update_single = cloudburst_client.register(update_single, 'update_single')
     if cloud_update_single:
@@ -64,27 +60,22 @@ def run(cloudburst_client, num_requests, sckt):
     for size in meta.ARR_SIZE:
         for i in [0, 999]:
             key = meta.key_gen(size, i)
-            ref = CloudburstReference(key, True)
-            print(f'Testing size {size}, i {i}, key {key}')
             
             # Read initial state: all zero
-            res_1stread = cloud_read_single(ref).get()
-            
-            print(res_1stread)
-            
+            res_1stread = cloud_read_single(key).get()
             arr_1stread = np.frombuffer(res_1stread)
             if np.count_nonzero(arr_1stread):
                 print(f'Unexpected result {res_1stread}, {arr_1stread} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
             
             # Increment arr[0] by 1
-            res_1stupdate = cloud_update_single(ref).get()
+            res_1stupdate = cloud_update_single(key).get()
             if res_1stupdate != 1.0:
                 print(f'Unexpected result {res_1stupdate} from update_single, size: {size}, idx: {i}')
                 sys.exit(1)
             
             # Read again, arr[0] should be 1
-            res_2ndread = cloud_read_single(ref).get()
+            res_2ndread = cloud_read_single(key).get()
             arr_2ndread = np.frombuffer(res_2ndread)
             if np.count_nonzero(arr_2ndread) != 1 or arr_2ndread[0] != 1.0:
                 print(f'Unexpected result {res_2ndread}, {arr_2ndread} from read_single, size: {size}, idx: {i}')
