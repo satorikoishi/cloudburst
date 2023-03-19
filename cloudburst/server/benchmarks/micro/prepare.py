@@ -42,6 +42,7 @@ def run(cloudburst_client, num_requests, sckt):
         
     def update_single(cloudburst, key):
         arr = cloudburst.get(key)
+        arr = arr.copy()
         arr[0] = arr[0] + 1
         cloudburst.put(key, arr)
         return arr[0] + 1
