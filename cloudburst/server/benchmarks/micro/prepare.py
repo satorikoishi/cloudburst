@@ -30,8 +30,8 @@ def run(cloudburst_client, num_requests, sckt):
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key):
         import cloudpickle as cp
-        ret = cloudburst.get(key)        
-        return cp.loads(ret.reveal())
+        arr = cloudburst.get(key).reveal()      
+        return cp.loads(arr.tobytes())
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
     if cloud_read_single:
@@ -50,8 +50,9 @@ def run(cloudburst_client, num_requests, sckt):
             ref = CloudburstReference(key, True)
             res = cloud_read_single(ref).get()
             
-            if res != 0.0:
-                print(f'Unexpected result {res} from read_single, size: {size}, idx: {i}')
+            arr = np.frombuffer(arr)
+            if np.count_nonzero(arr):
+                print(f'Unexpected result {res}, {arr} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
 
     logging.info('Successfully tested function!')
