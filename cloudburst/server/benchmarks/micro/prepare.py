@@ -8,6 +8,7 @@ import numpy as np
 
 from cloudburst.server.benchmarks.micro import meta
 from cloudburst.shared.reference import CloudburstReference
+from cloudburst.shared.proto.cloudburst_pb2 import CloudburstError, DAG_ALREADY_EXISTS
 
 def run(cloudburst_client, num_requests, sckt):        
     if num_requests != 1:
@@ -29,8 +30,9 @@ def run(cloudburst_client, num_requests, sckt):
 
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key):
-        arr = cloudburst.get(key)
-        return arr.tobytes()
+        # arr = cloudburst.get(key)
+        # return arr.tobytes()
+        return key
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
     if cloud_read_single:
@@ -63,6 +65,7 @@ def run(cloudburst_client, num_requests, sckt):
         for i in [0, 999]:
             key = meta.key_gen(size, i)
             ref = CloudburstReference(key, True)
+            print(f'Testing size {size}, i {i}, key {key}')
             
             # Read initial state: all zero
             res_1stread = cloud_read_single(ref).get()
@@ -88,5 +91,7 @@ def run(cloudburst_client, num_requests, sckt):
                 sys.exit(1)
 
     logging.info('Successfully tested function!')
+    
+    ## TODO: DAG
 
     return [], [], [], 0
