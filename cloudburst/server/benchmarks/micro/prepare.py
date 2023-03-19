@@ -31,7 +31,7 @@ def run(cloudburst_client, num_requests, sckt):
     def read_single(cloudburst, key):
         import cloudpickle as cp
         arr = cloudburst.get(key).reveal()
-        return cp.loads(arr.tobytes())
+        return cp.loads(arr).tobytes()
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
     if cloud_read_single:
@@ -67,6 +67,9 @@ def run(cloudburst_client, num_requests, sckt):
             
             # Read initial state: all zero
             res_1stread = cloud_read_single(ref).get()
+            
+            print(res_1stread)
+            
             arr_1stread = np.frombuffer(res_1stread)
             if np.count_nonzero(arr_1stread):
                 print(f'Unexpected result {res_1stread}, {arr_1stread} from read_single, size: {size}, idx: {i}')
