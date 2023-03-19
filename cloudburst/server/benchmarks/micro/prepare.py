@@ -51,7 +51,7 @@ def run(cloudburst_client, num_requests, sckt):
             res = cloud_read_single(ref).get()
             
             if res != 0.0:
-                print(f'Unexpected result from read_single, size: {size}, idx: {i}')
+                print(f'Unexpected result {res} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
 
     logging.info('Successfully tested function!')
