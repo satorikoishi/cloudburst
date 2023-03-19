@@ -45,7 +45,7 @@ def run(cloudburst_client, num_requests, sckt):
         arr = arr.copy()
         arr[0] = arr[0] + 1
         cloudburst.put(key, arr)
-        return arr[0] + 1
+        return arr[0]
 
     cloud_update_single = cloudburst_client.register(update_single, 'update_single')
     if cloud_update_single:
@@ -57,6 +57,7 @@ def run(cloudburst_client, num_requests, sckt):
     logging.info('Function ready')
 
     ''' TEST REGISTERED FUNCTIONS '''
+    # TODO: Test may fail due to inconsistency
     
     for size in meta.ARR_SIZE:
         for i in [0, 999]:

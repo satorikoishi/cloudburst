@@ -41,10 +41,9 @@ def run(cloudburst_client, num_requests, sckt, args):
         
         # TODO: generate ref for different workloads
         key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
-        ref = CloudburstReference(key, True)
         
         # cloudburst_client.exec_func(function_name, ref)
-        res = cloudburst_client.exec_func(function_name, ref)     # check result for debugging
+        res = cloudburst_client.exec_func(function_name, key)     # check result for debugging
         print(res.get())
         
         end = time.time()
