@@ -17,7 +17,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         sys.exit(1)
     
     function_name = args[0]
-    v_size = args[1]
+    v_size = int(args[1])
     
     if v_size not in meta.ARR_SIZE:
         print(f'{v_size} not in {meta.ARR_SIZE}')
