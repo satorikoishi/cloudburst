@@ -37,20 +37,25 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_total = []
 
     for i in range(num_requests):
-        start = time.time()
-        
         # TODO: generate ref for different workloads
         key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
         
-        # cloudburst_client.exec_func(function_name, ref)
-        func = cloudburst_client.get_function(function_name)     # check result for debugging
+        start = time.time()
+        # TODO: call dag
+        func = cloudburst_client.get_function(function_name)
         res = func(key)
-        print(res.get())
-        
         end = time.time()
-
-        epoch_total.append(end - start)
-        total_time.append(end - start)
+        s_time = [end - start]
+        
+        start = time.time()
+        res.get()
+        end = time.time()
+        k_time = [end - start]
+        
+        scheduler_time += [s_time]
+        kvs_time += [k_time]
+        epoch_total += [s_time + k_time]
+        total_time += [s_time + k_time]
 
         log_end = time.time()
         if (log_end - log_start) > 10:
