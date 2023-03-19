@@ -64,25 +64,25 @@ def run(cloudburst_client, num_requests, sckt):
         for i in [0, 999]:
             key = meta.key_gen(size, i)
             ref = CloudburstReference(key, True)
-            res = cloud_read_single(ref).get()
+            res_1stread = cloud_read_single(ref).get()
             
             # Read initial state: all zero
             arr = np.frombuffer(arr)
             if np.count_nonzero(arr):
-                print(f'Unexpected result {res}, {arr} from read_single, size: {size}, idx: {i}')
+                print(f'Unexpected result {res_1stread}, {arr} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
             
             # Increment arr[0] by 1
-            res = cloud_update_single(ref).get()
-            if res != 1.0:
-                print(f'Unexpected result {res} from update_single, size: {size}, idx: {i}')
+            res_1stupdate = cloud_update_single(ref).get()
+            if res_1stupdate != 1.0:
+                print(f'Unexpected result {res_1stupdate} from update_single, size: {size}, idx: {i}')
                 sys.exit(1)
             
             # Read again, arr[0] should be 1
-            res = cloud_read_single(ref).get()
+            res_2ndread = cloud_read_single(ref).get()
             arr = np.frombuffer(arr)
             if np.count_nonzero(arr) != 1 or arr[0] != 1.0:
-                print(f'Unexpected result {res}, {arr} from read_single, size: {size}, idx: {i}')
+                print(f'Unexpected result {res_2ndread}, {arr} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
 
     logging.info('Successfully tested function!')
