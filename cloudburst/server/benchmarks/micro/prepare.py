@@ -29,7 +29,7 @@ def run(cloudburst_client, num_requests, sckt):
 
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key):
-        arr = cloudburst.get(key).reveal()
+        arr = cloudburst.get(key)
         return arr
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
@@ -40,7 +40,7 @@ def run(cloudburst_client, num_requests, sckt):
         sys.exit(1)
         
     def update_single(cloudburst, key):
-        arr = cloudburst.get(key).reveal()
+        arr = cloudburst.get(key)
         arr[0] = arr[0] + 1
         cloudburst.put(key, arr)
         
