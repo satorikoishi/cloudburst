@@ -63,7 +63,9 @@ def run(cloudburst_client, num_requests, sckt):
             
             # Read initial state: all zero
             res_1stread = cloud_read_single(key).get()
-            arr_1stread = np.frombuffer(res_1stread)
+            print(f'Read single returns: {res_1stread}')
+            
+            arr_1stread = np.fromstring(res_1stread)
             if np.count_nonzero(arr_1stread):
                 print(f'Unexpected result {res_1stread}, {arr_1stread} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
@@ -76,7 +78,7 @@ def run(cloudburst_client, num_requests, sckt):
             
             # Read again, arr[0] should be 1
             res_2ndread = cloud_read_single(key).get()
-            arr_2ndread = np.frombuffer(res_2ndread)
+            arr_2ndread = np.fromstring(res_2ndread)
             if np.count_nonzero(arr_2ndread) != 1 or arr_2ndread[0] != 1.0:
                 print(f'Unexpected result {res_2ndread}, {arr_2ndread} from read_single, size: {size}, idx: {i}')
                 sys.exit(1)
