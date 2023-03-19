@@ -54,6 +54,7 @@ def benchmark(ip, cloudburst_address, tid):
         resp_addr = splits[0]
         bname = splits[1]
         num_requests = int(splits[2])
+        args = []
         if len(splits) > 3:
             args = splits[3:]
             

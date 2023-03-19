@@ -9,4 +9,5 @@ for i in range(1, SIZE_UPPER_BOUND):
 NUM_KV_PAIRS = 1000
 
 def key_gen(size, idx):
-    return NUM_KV_PAIRS * size + idx
+    # To compatible with lattice
+    return str(NUM_KV_PAIRS * size + idx)
