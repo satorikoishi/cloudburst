@@ -29,8 +29,8 @@ def run(cloudburst_client, num_requests, sckt):
 
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key):
-        arr = cloudburst.get(key, False)
-        return arr
+        arr = cloudburst.get(key)
+        return arr.tobytes()
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
     if cloud_read_single:
