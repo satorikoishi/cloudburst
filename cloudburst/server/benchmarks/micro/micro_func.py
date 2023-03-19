@@ -43,7 +43,8 @@ def run(cloudburst_client, num_requests, sckt, args):
         key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
         
         # cloudburst_client.exec_func(function_name, ref)
-        res = cloudburst_client.exec_func(function_name, key)     # check result for debugging
+        func = cloudburst_client.get_function(function_name)     # check result for debugging
+        res = func(key)
         print(res.get())
         
         end = time.time()
