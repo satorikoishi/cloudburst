@@ -30,7 +30,7 @@ def run(cloudburst_client, num_requests, sckt):
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key):
         import cloudpickle as cp
-        arr = cloudburst.get(key).reveal()      
+        arr = cloudburst.get(key).reveal()
         return cp.loads(arr.tobytes())
 
     cloud_read_single = cloudburst_client.register(read_single, 'read_single')
@@ -44,7 +44,10 @@ def run(cloudburst_client, num_requests, sckt):
         arr = cloudburst.get(key).reveal()
         arr[0] = arr[0] + 1
         cloudburst.put(key, arr)
-        return arr[0]
+        
+        arr_typename = type(arr).__name__
+        a0_typename = type(arr[0]).__name__
+        return f'arr: {arr} of type {arr_typename}, a[0]: {arr[0]} of type {a0_typename}'
 
     cloud_update_single = cloudburst_client.register(update_single, 'update_single')
     if cloud_update_single:
