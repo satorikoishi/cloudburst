@@ -28,10 +28,10 @@ def generate_dataset(cloudburst_client):
         
         if next != 0:
             # normal case
-            list_slice = range(cur, next)
+            list_slice = list(range(cur, next))
         else:
             # last slice
-            list_slice = range(cur, UPPER_BOUND + 1)
+            list_slice = list(range(cur, UPPER_BOUND + 1))
         
         # First element points to next list
         list_slice[0] = next
