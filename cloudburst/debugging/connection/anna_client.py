@@ -14,16 +14,20 @@ client_ip = sys.argv[2]
 
 kvs_client = AnnaTcpClient(elb_addr, client_ip, local=local,
                                         offset=10)
+if len(sys.argv) == 3:
+    key = '1'
+    value = '2'
 
-key = '1'
-value = '2'
-
-lattice = serializer.dump_lattice(value)
-print("Writing to kvs, key = 1, value = 2")
-res = kvs_client.put(key, lattice)
-print(f"Write finished with {res}")
-
-print("Reading from kvs, key = 1")
+    # Write kv pair
+    lattice = serializer.dump_lattice(value)
+    print(f"Writing to kvs, key = {key}, value = {value}")
+    res = kvs_client.put(key, lattice)
+    print(f"Write finished with {res}")
+else:
+    # Read provided kv pair
+    key = sys.argv[3]
+    
+print(f"Reading from kvs, key = {key}")
 get_lattice = kvs_client.get(key)[key]
 get_v = serializer.load_lattice(get_lattice)
-print(f"Read get value {get_v}")
+print(f"Read get value = {get_v}")
