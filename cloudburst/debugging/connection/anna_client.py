@@ -13,7 +13,7 @@ elb_addr = sys.argv[1]
 client_ip = sys.argv[2]
 
 kvs_client = AnnaTcpClient(elb_addr, client_ip, local=local,
-                                        offset=10)
+                                        offset=18)
 if len(sys.argv) == 3:
     key = '1'
     value = '2'
