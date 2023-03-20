@@ -26,8 +26,9 @@ def generate_dataset(cloudburst_client):
         follow_arr = np.random.choice(all_users, follow_count, replace=False)
         cloudburst_client.put_object(userid, follow_arr)
         
-        print(f'User {userid} following {follow_count} users, they are: {follow_arr}')
+        # print(f'User {userid} following {follow_count} users, they are: {follow_arr}')
     
+    logging.info('Finished generating dataset')
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
@@ -53,6 +54,7 @@ def create_dag(cloudburst_client):
     
     ''' REGISTER DAG '''
     utils.register_dag_for_single_func(cloudburst_client, dag_name)
+    logging.info('Finished registering dag')
     
 
 def run(cloudburst_client, num_requests, sckt, args):
@@ -84,7 +86,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     for i in range(num_requests):
         id = random.randrange(1000)
         # DAG name = Function name
-        arg_map = {dag_name: [k, id]}
+        arg_map = {dag_name: [id, k]}
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map)
