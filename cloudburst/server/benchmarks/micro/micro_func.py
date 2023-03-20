@@ -9,21 +9,21 @@ from cloudburst.server.benchmarks import utils
 from cloudburst.server.benchmarks.micro import meta
 from cloudburst.shared.reference import CloudburstReference
 
-# Args: function_name, v_size
+# Args: dag_name, v_size
 
 def run(cloudburst_client, num_requests, sckt, args):
     if len(args) < 2:
-        print(f"{args} too short. Args at least 2: function_name, v_size")
+        print(f"{args} too short. Args at least 2: dag_name, v_size")
         sys.exit(1)
     
-    function_name = args[0]
+    dag_name = args[0]
     v_size = int(args[1])
     
     if v_size not in meta.ARR_SIZE:
         print(f'{v_size} not in {meta.ARR_SIZE}')
         sys.exit(1)
 
-    logging.info(f'Running micro bench. Function: {function_name}, Vsize: {v_size}')
+    logging.info(f'Running micro bench. Dag: {dag_name}, Vsize: {v_size}')
 
     total_time = []
     scheduler_time = []
@@ -40,10 +40,11 @@ def run(cloudburst_client, num_requests, sckt, args):
         # TODO: generate ref for different workloads
         key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
         
+        # DAG name = Function name
+        arg_map = {dag_name: key}
+        
         start = time.time()
-        # TODO: call dag
-        func = cloudburst_client.get_function(function_name)
-        res = func(key)
+        res = cloudburst_client.call_dag(dag_name, arg_map)
         end = time.time()
         s_time = [end - start]
         
