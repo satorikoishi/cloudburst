@@ -7,17 +7,8 @@ import uuid
 import numpy as np
 
 from cloudburst.server.benchmarks.micro import meta
+from cloudburst.server.benchmarks import utils
 from cloudburst.shared.reference import CloudburstReference
-from cloudburst.shared.proto.cloudburst_pb2 import CloudburstError, DAG_ALREADY_EXISTS
-
-def register_dag_for_single_func(cloudburst_client, function_name):
-    functions = [function_name]
-    connections = []
-    success, error = cloudburst_client.register_dag(function_name, functions,
-                                                     connections)
-    if not success and error != DAG_ALREADY_EXISTS:
-        print('Failed to register DAG: %s' % (CloudburstError.Name(error)))
-        sys.exit(1)
 
 def run(cloudburst_client, num_requests, sckt):        
     if num_requests != 1:
@@ -95,7 +86,7 @@ def run(cloudburst_client, num_requests, sckt):
     logging.info('Successfully tested function!')
     
     ''' REGISTER DAG '''
-    register_dag_for_single_func(cloudburst_client, "read_single")
-    register_dag_for_single_func(cloudburst_client, "update_single")
+    utils.register_dag_for_single_func(cloudburst_client, "read_single")
+    utils.register_dag_for_single_func(cloudburst_client, "update_single")
 
     return [], [], [], 0

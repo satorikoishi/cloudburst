@@ -15,6 +15,8 @@
 import logging
 
 import numpy as np
+import sys
+from cloudburst.shared.proto.cloudburst_pb2 import CloudburstError, DAG_ALREADY_EXISTS
 
 BENCHMARK_START_PORT = 3000
 TRIGGER_PORT = 2999
@@ -58,3 +60,13 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms'):
         logging.info(output)
     else:
         print(output)
+
+# Function name = DAG name
+def register_dag_for_single_func(cloudburst_client, function_name):
+    functions = [function_name]
+    connections = []
+    success, error = cloudburst_client.register_dag(function_name, functions,
+                                                     connections)
+    if not success and error != DAG_ALREADY_EXISTS:
+        print('Failed to register DAG: %s' % (CloudburstError.Name(error)))
+        sys.exit(1)

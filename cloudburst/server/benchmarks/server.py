@@ -31,6 +31,9 @@ from cloudburst.server.benchmarks.micro import (
     micro_func,
     prepare
 )
+from cloudburst.server.benchmarks.comparison import (
+    k_hop
+)
 import cloudburst.server.utils as sutils
 
 logging.basicConfig(filename='log_benchmark.txt', level=logging.INFO,
@@ -92,6 +95,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[],create=False):
                                                      sckt)
     elif bname == 'micro':
         total, scheduler, kvs, retries = micro_func.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'k_hop':
+        total, scheduler, kvs, retries = k_hop.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
