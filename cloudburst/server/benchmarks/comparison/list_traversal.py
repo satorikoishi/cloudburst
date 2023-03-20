@@ -20,7 +20,7 @@ def gen_nodeid(id):
 
 def generate_dataset(cloudburst_client):    
     splitter = np.random.choice(np.arange(1, UPPER_BOUND, dtype=int), 999, replace=False).sort()
-    splitter = [0] + splitter + [0]
+    splitter = np.concatenate(([0], splitter, [0]))
     
     for offset in range(1000):
         cur = splitter[offset]
