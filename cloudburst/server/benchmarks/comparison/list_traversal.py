@@ -18,9 +18,14 @@ UPPER_BOUND = 10000
 def gen_nodeid(id):
     return f'{dag_name}{id}'
 
+def key_args():
+    return f'{dag_name}_args'
+
 def generate_dataset(cloudburst_client):    
-    splitter = np.sort(np.random.choice(np.arange(1, UPPER_BOUND, dtype=int), 999, replace=False))
-    splitter = np.concatenate(([0], splitter, [0]))
+    splitter = np.sort(np.random.choice(np.arange(1, UPPER_BOUND, dtype=int), 999, replace=False)).tolist()
+    splitter = [0] + splitter
+    cloudburst_client.put_object(key_args(), splitter)
+    splitter = splitter + [0]
     
     for offset in range(1000):
         cur = splitter[offset]
@@ -42,10 +47,10 @@ def generate_dataset(cloudburst_client):
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
-    def list_traversal(cloudburst, start, depth):
+    def list_traversal(cloudburst, nodeid, depth):
         for i in range(depth):
-            start = cloudburst.get(gen_nodeid(start))[0]
-        return start
+            nodeid = cloudburst.get(gen_nodeid(nodeid))[0]
+        return nodeid
 
     cloud_list_traversal = cloudburst_client.register(list_traversal, dag_name)
     if cloud_list_traversal:
@@ -71,6 +76,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         return [], [], [], 0
     
     depth = int(args[0])
+    nodeid_list = cloudburst_client.get_object(key_args())
     
     logging.info(f'Running list traversal, depth {depth}')
 
@@ -86,9 +92,9 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_total = []
 
     for i in range(num_requests):
-        start = random.randrange(UPPER_BOUND)
+        nodeid = random.choice(nodeid_list)
         # DAG name = Function name
-        arg_map = {dag_name: [start, depth]}
+        arg_map = {dag_name: [nodeid, depth]}
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map)
