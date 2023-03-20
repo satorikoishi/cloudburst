@@ -46,12 +46,12 @@ def run(cloudburst_client, num_requests, sckt, args):
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map)
         end = time.time()
-        s_time = [end - start]
+        s_time = end - start
         
         start = time.time()
         res.get()
         end = time.time()
-        k_time = [end - start]
+        k_time = end - start
         
         scheduler_time += [s_time]
         kvs_time += [k_time]
