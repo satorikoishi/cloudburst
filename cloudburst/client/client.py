@@ -15,7 +15,6 @@
 import logging
 
 import zmq
-from redis import Redis;
 
 from cloudburst.shared.function import CloudburstFunction
 from cloudburst.shared.future import CloudburstFuture
@@ -39,7 +38,7 @@ from cloudburst.shared.utils import (
     FUNC_CREATE_PORT,
     LIST_PORT
 )
-from cloudburst.shared.kvs_client import AnnaKvsClient, ShredderKvsClient
+from cloudburst.shared.kvs_client import AnnaKvsClient, RedisKvsClient, ShredderKvsClient
 
 serializer = Serializer()
 
@@ -60,17 +59,18 @@ class CloudburstConnection():
         self.service_addr = 'tcp://' + func_addr + ':%d'
         self.context = zmq.Context(1)
 
-        kvs_addr, states_addr = self._connect()
-        while not kvs_addr or not states_addr:
+        kvs_addr, states_type, states_addr = self._connect()
+        while not kvs_addr or not states_type or not states_addr:
             logging.info('Connection timed out, retrying')
             print('Connection timed out, retrying')
-            kvs_addr, states_addr = self._connect()
+            kvs_addr, states_type, states_addr = self._connect()
 
         # Picks a random offset of 10, mostly to alleviate port conflicts when
         # running in local mode.
         self.kvs_client = AnnaKvsClient(kvs_addr, ip, local=local,
                                         offset=tid + 10)
-        self.states_client = ShredderKvsClient(host=states_addr, port=6379, db=0)
+        
+        self.states_client = self._get_states_kvs(self.kvs_client, states_type, states_addr)
 
         self.func_create_sock = self.context.socket(zmq.REQ)
         self.func_create_sock.connect(self.service_addr % FUNC_CREATE_PORT)
@@ -340,9 +340,9 @@ class CloudburstConnection():
 
         try:
             result = sckt.recv_string()
-            anna_ip, states_ip = result.split('#')
-            print("Received CONNECT response: %s, %s" % (anna_ip, states_ip))
-            return anna_ip, states_ip
+            anna_ip, states_type, states_ip = result.split('#')
+            print("Received CONNECT response: %s, %s, %s" % (anna_ip, states_type, states_ip))
+            return anna_ip, states_type, states_ip
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:
                 return None
@@ -356,3 +356,13 @@ class CloudburstConnection():
         flist = StringSet()
         flist.ParseFromString(self.list_sock.recv())
         return flist.keys
+
+    def _get_states_kvs(self, anna_client, typ, ip):
+        if typ == 'anna':
+            return anna_client
+        elif typ == 'shredder':
+            return ShredderKvsClient(host=ip, port=6379, db=0)
+        elif typ == 'redis':
+            return RedisKvsClient(host=ip, port=6379, db=0)
+        else: raise RuntimeError(f"kvs type {typ} was not supported")
+            

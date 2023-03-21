@@ -43,10 +43,14 @@ print(f"value of key 2 after library_test: {local_cloud.get_object(2)}") # 110
 # execute js function remotely
 def shredder_example(user_lib):
     results_list = []
-    results_list.append(user_lib.execute_js_fun('setup'))
-    results_list.append(user_lib.execute_js_fun('get', '0'))
-    results_list.append(user_lib.execute_js_fun('count_friend_list', '0', '1'))
-    results_list.append(user_lib.execute_js_fun('predict'))
+    try:
+        results_list.append(user_lib.execute_js_fun('setup'))
+        results_list.append(user_lib.execute_js_fun('get', '0'))
+        results_list.append(user_lib.execute_js_fun('count_friend_list', '0', '1'))
+        results_list.append(user_lib.execute_js_fun('predict'))
+    except Exception as e:
+        results_list.append(f'Error: {e}')
+
     return results_list
 
 execute_js_test = local_cloud.register(shredder_example, 'shredder_example')

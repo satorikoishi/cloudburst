@@ -149,6 +149,7 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
         return self.client.put(ref, serializer.dump_lattice(value))
 
     def get(self, ref, deserialize=True):
+        ref = ref if type(ref) == str else str(ref)
         refs = ref if type(ref) == list else [ref]
 
         kv_pairs = self.client.get_list(refs)
@@ -207,5 +208,10 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
         self.recv()
 
     def execute_js_fun(self, name, *args):
-        return self.client.execute_command("JS", name, *args)
+        try:
+            res = self.client.execute_command("JS", name, *args)
+        except Exception as e:
+            print(f"Error when execute js fun: {e}")
+            raise e
+        return res
     

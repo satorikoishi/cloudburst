@@ -20,39 +20,59 @@ class AbstractKvsClient():
         raise NotImplementedError
 
 class AnnaKvsClient(AbstractKvsClient):
-    def __init__(self, kvs_addr, ip, local, offset):
-        self.client = AnnaTcpClient(kvs_addr, ip, local=local, offset=offset)
+    def __init__(self, kvs_addr=None, ip=None, local=None, offset=None, anna_client=None):
+        if anna_client is not None:
+            self.client = anna_client
+        else: self.client = AnnaTcpClient(kvs_addr, ip, local=local, offset=offset)
 
     def get(self, key):
+        if not isinstance(key, str):
+            key = str(key)
         return self.client.get(key)[key]
 
     def get_list(self, keys):
+        keys = [str(key) for key in keys]
         return self.client.get(keys)
 
     def put(self, key, val):
+        if not isinstance(key, str):
+            key = str(key)
         return self.client.put(key, val)
     
     def put_list(self, keys, vals):
+        keys = [str(key) for key in keys]
         return self.client.put(keys, vals)
+
+    def execute_command(self, *args):
+        raise RuntimeError('anna kvs client dose not impl execute_command')
 
 class AnnaIpcKvsClient(AbstractKvsClient):
     def __init__(self, thread_id, context):
         self.client = AnnaIpcClient(thread_id, context)
 
     def get(self, key):
+        if not isinstance(key, str):
+            key = str(key)
         return self.client.get(key)[key]
 
     def get_list(self, keys):
+        keys = [str(key) for key in keys]
         return self.client.get(keys)
 
     def causal_get(self, keys, future_read_set, key_version_locations, consistency, client_id):
         raise self.client.causal_get(keys, future_read_set, key_version_locations, consistency, client_id)
 
     def put(self, key, val):
+        if not isinstance(key, str):
+            key = str(key)
         return self.client.put(key, val)
 
     def put_list(self, keys, vals):
+        keys = [str(key) for key in keys]
         return self.client.put(keys, vals)
+    
+    def execute_command(self, *args):
+        raise RuntimeError('anna ipc kvs client dose not impl execute_command')
 
 class RedisKvsClient(AbstractKvsClient):
     def __init__(self, host, port, db):
@@ -74,6 +94,9 @@ class RedisKvsClient(AbstractKvsClient):
         serialized_vals = map(serializer.dump, vals)
         kv_dict = dict(zip(keys, serialized_vals))
         return self.client.mset(kv_dict)
+    
+    def execute_command(self, *args):
+        raise RuntimeError('redis kvs client dose not impl execute_command')
 
 class ShredderKvsClient(AbstractKvsClient):
     def __init__(self, host, port, db):

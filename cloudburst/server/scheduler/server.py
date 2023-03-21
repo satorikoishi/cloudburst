@@ -65,7 +65,7 @@ logging.basicConfig(filename='log_scheduler.txt', level=logging.INFO,
                     format='%(asctime)s %(message)s')
 
 
-def scheduler(ip, mgmt_ip, user_states_ip, route_addr, policy_type):
+def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
 
     # If the management IP is not set, we are running in local mode.
     local = (mgmt_ip is None)
@@ -167,7 +167,7 @@ def scheduler(ip, mgmt_ip, user_states_ip, route_addr, policy_type):
         if connect_socket in socks and socks[connect_socket] == zmq.POLLIN:
             msg = connect_socket.recv_string()
             print("Received CONNECT request: %s" % msg)
-            connect_socket.send_string(f'{route_addr}#{user_states_ip}')
+            connect_socket.send_string(f'{route_addr}#{user_states["type"]}#{user_states["ip"]}')
 
         if (func_create_socket in socks and
                 socks[func_create_socket] == zmq.POLLIN):
@@ -347,5 +347,5 @@ if __name__ == '__main__':
     conf = sutils.load_conf(conf_file)
     sched_conf = conf['scheduler']
 
-    scheduler(conf['ip'], conf['mgmt_ip'], conf['user_states_ip'], sched_conf['routing_address'],
+    scheduler(conf['ip'], conf['mgmt_ip'], conf['user_states'], sched_conf['routing_address'],
               sched_conf['policy'])

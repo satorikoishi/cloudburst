@@ -15,6 +15,7 @@
 import random
 
 import cloudburst.server.utils as sutils
+from cloudburst.shared.kvs_client import AnnaKvsClient, RedisKvsClient, ShredderKvsClient
 from cloudburst.shared.proto.cloudburst_pb2 import (
     NORMAL,
     EXECUTION_ERROR
@@ -114,3 +115,12 @@ def get_continuation_address(schedulers):
     # we just use 127.0.0.1 as the scheduler address.
     addr = random.choice(schedulers)
     return  'tcp://' + addr + ':' +  str(sutils.CONTINUATION_PORT)
+
+def get_states_kvs(anna_client, typ, ip):
+    if typ == 'anna':
+        return AnnaKvsClient(anna_client = anna_client)
+    elif typ == 'shredder':
+        return ShredderKvsClient(host=ip, port=6379, db=0)
+    elif typ == 'redis':
+        return RedisKvsClient(host=ip, port=6379, db=0)
+    else: raise RuntimeError(f"kvs type {typ} was not supported")

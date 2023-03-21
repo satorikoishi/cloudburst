@@ -26,6 +26,7 @@ from cloudburst.server.executor import utils
 from cloudburst.server.executor.call import exec_function, exec_dag_function
 from cloudburst.server.executor.pin import pin, unpin
 from cloudburst.server.executor.user_library import CloudburstUserLibrary, KvsUserLibrary
+from cloudburst.server.executor.utils import get_states_kvs
 from cloudburst.shared.anna_ipc_client import AnnaIpcClient
 from cloudburst.shared.kvs_client import RedisKvsClient, ShredderKvsClient
 from cloudburst.shared.proto.cloudburst_pb2 import (
@@ -43,7 +44,7 @@ REPORT_THRESH = 5
 BATCH_SIZE_MAX = 20
 
 
-def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
+def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
     logging.basicConfig(filename='log_executor.txt', level=logging.INFO,
                         format='%(asctime)s %(message)s')
 
@@ -99,8 +100,7 @@ def executor(ip, mgmt_ip, user_states_ip, schedulers, thread_id):
         client = AnnaTcpClient('127.0.0.1', '127.0.0.1', local=True, offset=1)
         local = True
 
-    # states_client = RedisKvsClient(host=user_states_ip, port=6379, db=0)
-    states_client = ShredderKvsClient(host=user_states_ip, port=6379, db=0)
+    states_client = get_states_kvs(client, user_states['type'], user_states['ip'])
 
     # user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
     #                                   client)
@@ -506,5 +506,5 @@ if __name__ == '__main__':
     conf = sutils.load_conf(conf_file)
     exec_conf = conf['executor']
 
-    executor(conf['ip'], conf['mgmt_ip'], conf['user_states_ip'], exec_conf['scheduler_ips'],
+    executor(conf['ip'], conf['mgmt_ip'], conf['user_states'], exec_conf['scheduler_ips'],
              int(exec_conf['thread_id']))

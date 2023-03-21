@@ -1,6 +1,8 @@
 ip: 127.0.0.1
 mgmt_ip: NULL
-user_states_ip: 127.0.0.1
+user_states:
+  ip: 10.10.1.2
+  type: shredder
 executor:
   scheduler_ips:
     - 127.0.0.1
