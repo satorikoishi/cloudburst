@@ -14,7 +14,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-IP=`ifconfig eno1 | grep 'inet' | grep -v inet6 | sed -e 's/^[ \t]*//' | cut -d' ' -f2`
+IP=`ifconfig $IFACE | grep 'inet' | grep -v inet6 | sed -e 's/^[ \t]*//' | cut -d' ' -f2`
 
 # A helper function that takes a space separated list and generates a string
 # that parses as a YAML list.
@@ -72,6 +72,11 @@ git submodule update
 touch conf/cloudburst-config.yml
 echo "ip: $IP" >> conf/cloudburst-config.yml
 echo "mgmt_ip: $MGMT_IP" >> conf/cloudburst-config.yml
+
+# User state ip and type
+echo "user_states:" >> conf/cloudburst-config.yml
+echo "    ip: $USER_STATE_IP" >> conf/cloudburst-config.yml
+echo "    type: $USER_STATE_TYPE" >> conf/cloudburst-config.yml
 
 # Add the current directory to the PYTHONPATH in order to resolve imports
 # correctly.
