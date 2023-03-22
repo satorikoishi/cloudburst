@@ -48,9 +48,9 @@ COPY start-cloudburst.sh /start-cloudburst.sh
 
 RUN pip3 install multidict attrs yarl async_timeout idna_ssl charset_normalizer aiosignal
 RUN pip3 install pandas s3fs 
-RUN pip3 install redis==4.3.5
 
 RUN touch a
 RUN pip3 install --upgrade git+https://github.com/devin-petersohn/modin@engines/cloudburst_init
+RUN pip3 install redis==4.3.5
 
 CMD bash start-cloudburst.sh
