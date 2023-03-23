@@ -16,6 +16,7 @@ import logging
 
 import numpy as np
 import sys
+import csv
 from cloudburst.shared.proto.cloudburst_pb2 import CloudburstError, DAG_ALREADY_EXISTS
 
 BENCHMARK_START_PORT = 3000
@@ -23,7 +24,7 @@ TRIGGER_PORT = 2999
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
-def print_latency_stats(data, ident, log=False, epoch=0, unit='ms'):
+def print_latency_stats(data, ident, bname, log=False, epoch=0, unit='ms', csv_filename=None):
     # Amplify according to unit
     data = [x * unit_dict[unit] for x in data]
     
@@ -60,6 +61,30 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms'):
         logging.info(output)
     else:
         print(output)
+
+    if csv_filename:
+        csv_output = {
+            'BNAME': bname,
+            'IDENT': ident, 
+            'SAMPLE_SIZE': len(data), 
+            'THROUGHPUT': tput, 
+            'TIME_UNIT': unit,
+            'MEAN': mean,
+            'MEDIAN': median,
+            'MIN': mn,
+            'MAX': mx,
+            'P25': p25,
+            'P75': p75,
+            'P5': p05,
+            'P95': p95,
+            'P1': p01,
+            'P99': p99
+            }
+        with open(csv_filename, 'a', newline='') as csv_file:
+            writer = csv.DictWriter(csv_file, fieldnames=csv_output.keys())
+            if csv_file.tell() == 0:
+                writer.writeheader()
+            writer.writerow(csv_output)
 
 # Function name = DAG name
 def register_dag_for_single_func(cloudburst_client, function_name):
