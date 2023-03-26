@@ -24,7 +24,7 @@ TRIGGER_PORT = 2999
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
-def print_latency_stats(data, ident, bname, log=False, epoch=0, unit='ms', csv_filename=None):
+def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, args=[], csv_filename=None):
     # Amplify according to unit
     data = [x * unit_dict[unit] for x in data]
     
@@ -63,9 +63,11 @@ def print_latency_stats(data, ident, bname, log=False, epoch=0, unit='ms', csv_f
         print(output)
 
     if csv_filename:
+        args = ":".join(args) if args else None
         csv_output = {
             'BNAME': bname,
             'IDENT': ident, 
+            'ARGS': args,
             'SAMPLE_SIZE': len(data), 
             'THROUGHPUT': tput, 
             'TIME_UNIT': unit,

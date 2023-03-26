@@ -116,7 +116,7 @@ def run(cloudburst_client, num_requests, sckt, args):
             if sckt:
                 sckt.send(cp.dumps(epoch_total))
             utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
-                                        (log_epoch), True)
+                                        (log_epoch), True, bname='list_traversal', args=args, csv_filename='benchmark.csv')
 
             epoch_total.clear()
             log_epoch += 1
