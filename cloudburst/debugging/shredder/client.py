@@ -20,7 +20,7 @@ if len(sys.argv) == 4:
     res = client.put(key, lattice)
 else:
     print(f'Client get key {key}')
-    get_lattice = client.get(key)[key]
+    get_lattice = client.get(key)
     res = serializer.load_lattice(get_lattice)
 
 print(res)
