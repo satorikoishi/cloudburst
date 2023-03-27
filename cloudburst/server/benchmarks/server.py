@@ -69,7 +69,7 @@ def benchmark(ip, cloudburst_address, tid):
         
         run_bench(bname, num_requests, cloudburst, kvs, sckt, args)
 
-def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[],create=False):
+def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False):
     logging.info('Running benchmark %s, %d requests.' % (bname, num_requests))
 
     if bname == 'composition':
@@ -108,9 +108,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[],create=False):
         sckt.send(b'END')
         return
     
-    summary_result(bname, sckt, total, scheduler, kvs, retries)
+    summary_result(bname, sckt, total, scheduler, kvs, retries, args)
 
-def summary_result(bname, sckt, total, scheduler, kvs, retries):
+def summary_result(bname, sckt, total, scheduler, kvs, retries, args=[]):
     # some benchmark modes return no results
     if not total:
         sckt.send(b'END')
@@ -123,11 +123,11 @@ def summary_result(bname, sckt, total, scheduler, kvs, retries):
 
     logging.info('Total computation time: %.4f' % (sum(total)))
     if len(total) > 0:
-        utils.print_latency_stats(total, 'E2E', True)
+        utils.print_latency_stats(total, 'E2E', True, bname=bname, args=args, csv_filename="benchmark.csv")
     if len(scheduler) > 0:
-        utils.print_latency_stats(scheduler, 'SCHEDULER', True)
+        utils.print_latency_stats(scheduler, 'SCHEDULER', True, bname=bname, args=args, csv_filename="benchmark.csv")
     if len(kvs) > 0:
-        utils.print_latency_stats(kvs, 'KVS', True)
+        utils.print_latency_stats(kvs, 'KVS', True, bname=bname, args=args, csv_filename="benchmark.csv")
     logging.info('Number of KVS get retries: %d' % (retries))
 
 
