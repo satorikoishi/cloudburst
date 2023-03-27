@@ -9,8 +9,9 @@ client = ShredderKvsClient(host=sys.argv[1], port=6379, db=0)
 key = sys.argv[2]
 
 if len(sys.argv) == 4:
-    print(f'Client put key {key}, value of len {sys.argv[3]}')
-    value = 'x' * sys.argv[3]
+    repeat = int(sys.argv[3])
+    print(f'Client put key {key}, value of len {repeat}')
+    value = 'x' * repeat
     res = client.put(key, value)
 else:
     print(f'Client get key {key}')
