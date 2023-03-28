@@ -1,5 +1,5 @@
-# SIZE_UPPER_BOUND = 3    # For quick debugging
-SIZE_UPPER_BOUND = 7
+SIZE_UPPER_BOUND = 4    # For quick debugging
+# SIZE_UPPER_BOUND = 7
 
 ARR_SIZE = []
 
