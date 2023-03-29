@@ -15,15 +15,44 @@ dag_name = 'list_traversal'
 # 1000 lists, out of 10000 numbers
 UPPER_BOUND = 10000
 
+# def gen_nodeid(id):
+#     return f'{dag_name}{id}'
+
+# def key_args():
+#     return f'{dag_name}_args'
+
+# def generate_dataset(cloudburst_client):    
+#     splitter = np.sort(np.random.choice(np.arange(1, UPPER_BOUND, dtype=int), 999, replace=False)).tolist()
+#     splitter = [0] + splitter
+#     cloudburst_client.put_object(key_args(), splitter)
+#     splitter = splitter + [0]
+    
+#     for offset in range(1000):
+#         cur = splitter[offset]
+#         next = splitter[offset + 1]
+        
+#         if next != 0:
+#             # normal case
+#             list_slice = list(range(cur, next))
+#         else:
+#             # last slice
+#             list_slice = list(range(cur, UPPER_BOUND + 1))
+        
+#         # First element points to next list
+#         list_slice[0] = next
+        
+#         cloudburst_client.put_object(gen_nodeid(cur), list_slice)
+            
+#     logging.info('Finished generating dataset')
+
 def gen_nodeid(id):
-    return f'{dag_name}{id}'
+    return f'{id}'
 
 def key_args():
-    return f'{dag_name}_args'
+    return '100000'
 
 def generate_dataset(cloudburst_client):    
-    splitter = np.sort(np.random.choice(np.arange(1, UPPER_BOUND, dtype=int), 999, replace=False)).tolist()
-    splitter = [0] + splitter
+    splitter = np.arange(0, UPPER_BOUND, 10).tolist()
     cloudburst_client.put_object(key_args(), splitter)
     splitter = splitter + [0]
     
@@ -36,7 +65,7 @@ def generate_dataset(cloudburst_client):
             list_slice = list(range(cur, next))
         else:
             # last slice
-            list_slice = list(range(cur, UPPER_BOUND + 1))
+            list_slice = list(range(cur, UPPER_BOUND))
         
         # First element points to next list
         list_slice[0] = next
