@@ -10,7 +10,10 @@ from cloudburst.server.benchmarks import utils
 from cloudburst.shared.reference import CloudburstReference
 
 # Args: k
-dag_name = 'list_traversal'
+python_dag_name = 'list_traversal'
+
+# JS rpc version
+js_dag_name = 'js_list_traversal'
 
 # 1000 lists, out of 10000 numbers
 UPPER_BOUND = 10000
@@ -81,15 +84,27 @@ def create_dag(cloudburst_client):
             nodeid = cloudburst.get(gen_nodeid(nodeid))[0]
         return nodeid
 
-    cloud_list_traversal = cloudburst_client.register(list_traversal, dag_name)
+    cloud_list_traversal = cloudburst_client.register(list_traversal, python_dag_name)
     if cloud_list_traversal:
+        logging.info('Successfully registered function.')
+    else:
+        print('Failed registered function.')
+        sys.exit(1)
+
+    def js_list_traversal(cloudburst, nodeid, depth):
+        nodeid = cloudburst.execute_js_fun('list_traversal', nodeid, depth)
+        return nodeid
+    
+    cloud_js_list_traversal = cloudburst_client.register(js_list_traversal, js_dag_name)
+    if cloud_js_list_traversal:
         logging.info('Successfully registered function.')
     else:
         print('Failed registered function.')
         sys.exit(1)
     
     ''' REGISTER DAG '''
-    utils.register_dag_for_single_func(cloudburst_client, dag_name)
+    utils.register_dag_for_single_func(cloudburst_client, python_dag_name)
+    utils.register_dag_for_single_func(cloudburst_client, js_dag_name)
     logging.info('Finished registering dag')
     
 
@@ -104,10 +119,12 @@ def run(cloudburst_client, num_requests, sckt, args):
         create_dag(cloudburst_client)
         return [], [], [], 0
     
-    depth = int(args[0])
+    dag_name, depth = js_dag_name, args[1] if args[0] == 'js' else python_dag_name, int(args[0])
+
+    # depth = int(args[0])
     nodeid_list = cloudburst_client.get_object(key_args())
     
-    logging.info(f'Running list traversal, depth {depth}')
+    logging.info(f'Running list traversal, depth {depth}, dag: {dag_name}')
 
     total_time = []
     scheduler_time = []
