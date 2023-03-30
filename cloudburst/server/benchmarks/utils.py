@@ -97,3 +97,18 @@ def register_dag_for_single_func(cloudburst_client, function_name):
     if not success and error != DAG_ALREADY_EXISTS:
         print('Failed to register DAG: %s' % (CloudburstError.Name(error)))
         sys.exit(1)
+
+def shredder_setup_data(cloudburst_client):
+    cloud_setup_shredder = cloudburst_client.get_function('setup_shredder')
+    if cloud_setup_shredder is None:
+        def setup_shredder(cloudburst):
+            return cloudburst.execute_js_fun('setup')
+        cloud_setup_shredder = cloudburst_client.register(setup_shredder, 'setup_shredder')
+        if cloud_setup_shredder:
+            logging.info('Successfully registered setup shredder function.')
+        else:
+            print('Failed registered setup shredder function.')
+            sys.exit(1)
+    
+    res = cloud_setup_shredder().get()
+    logging.info(f'Setup shredder result: {res}')

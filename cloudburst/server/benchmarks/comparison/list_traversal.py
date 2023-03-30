@@ -117,9 +117,11 @@ def run(cloudburst_client, num_requests, sckt, args):
         # Create dataset and DAG
         generate_dataset(cloudburst_client)
         create_dag(cloudburst_client)
+        if args[1] == 'shredder':
+            utils.shredder_setup_data(cloudburst_client)
         return [], [], [], 0
     
-    dag_name, depth = js_dag_name, args[1] if args[0] == 'js' else python_dag_name, int(args[0])
+    dag_name, depth = (js_dag_name, args[1]) if args[0] == 'js' else (python_dag_name, int(args[0]))
 
     # depth = int(args[0])
     nodeid_list = cloudburst_client.get_object(key_args())
