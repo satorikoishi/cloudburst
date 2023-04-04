@@ -29,7 +29,7 @@ def run(cloudburst_client, num_requests, sckt, create):
     if create:
         def slp(cloudburst, x):
             import time
-            time.sleep(.050)
+            time.sleep(.050)    # 50 ms
             return x
 
         cloud_sleep = cloudburst_client.register(slp, 'sleep')

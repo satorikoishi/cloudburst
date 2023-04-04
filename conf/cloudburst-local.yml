@@ -1,8 +1,13 @@
 ip: 127.0.0.1
 mgmt_ip: NULL
 user_states:
-  ip: 10.10.1.2
-  type: shredder
+  # A default item named `anna` will be automatically added when running. 
+  # This is because `anna_ipc` must be created at runtime
+  # So the items bellow are just the additional KVSs that can be used.
+  - name: shredder
+    type: shredder
+    host: 10.10.1.2
+    port: 6379
 executor:
   scheduler_ips:
     - 127.0.0.1

@@ -5,6 +5,8 @@ from cloudburst.shared.serializer import Serializer
 
 serializer = Serializer()
 
+DEFAULT_KVS_NAME = 'anna'
+
 class AbstractKvsClient():
     
     def get(self, key):
@@ -121,4 +123,49 @@ class ShredderKvsClient(AbstractKvsClient):
 
     def execute_command(self, *args):
         return self.client.execute_command(*args)
+    
+class KvsClient():
+    def __init__(self, kvs_list):
+        self.clients =  {}
+        for conf in kvs_list:
+            if conf['type'] == 'anna':
+                self.clients[conf['name']] = AnnaKvsClient(conf['addr'], conf['ip'], conf.get('local', default=None), conf.get('offset', default=None))
+            elif conf['type'] == 'anna_ipc':
+                raise NotImplementedError('anna_ipc kvs client can not be created directly by KvsClient')
+            elif conf['type'] == 'redis':
+                self.clients[conf['name']] = RedisKvsClient(conf['host'], conf['port'], conf.get('db', default=0))
+            elif conf['type'] == 'shredder':
+                self.clients[conf['name']] = ShredderKvsClient(conf['host'], conf['port'], conf.get('db', default=0))
+            else:
+                raise ValueError('Invalid kvs type: {}'.format(conf['type']))
+            
+    def add_client(self, client_name, client, update=False):
+        if client_name in self.clients and not update:
+            raise ValueError('client name {} already exists'.format(client_name))
+        self.clients[client_name] = client
 
+    def get(self, key, client_name=DEFAULT_KVS_NAME):
+        return self.clients[client_name].get(key)
+
+    def get_list(self, keys, client_name=DEFAULT_KVS_NAME):
+        return self.clients[client_name].get_list(keys)
+    
+    def put(self, key, val, client_name=DEFAULT_KVS_NAME):
+        return self.clients[client_name].put(key, val)
+    
+    def put_list(self, keys, vals, client_name=DEFAULT_KVS_NAME):
+        return self.clients[client_name].put_list(keys, vals)
+    
+    def execute_command(self, *args, client_name=DEFAULT_KVS_NAME):
+        return self.clients[client_name].execute_command(*args)
+    
+    def get_client(self, client_name=DEFAULT_KVS_NAME):
+        return self.clients[client_name]
+    
+    def get_client_names(self):
+        return self.clients.keys()
+    
+    def get_client_types(self):
+        return [client.__class__.__name__ for client in self.clients.values()]
+
+    
