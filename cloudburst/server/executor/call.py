@@ -157,41 +157,51 @@ def _run_function(func, refs, args, user_lib):
 
 
 def _resolve_ref_normal(refs, user_states_kvs, cache):
-    deserialize_map = {}
     kv_pairs = {}
-    keys = set()
 
-    for ref in refs:
-        deserialize_map[ref.key] = ref.deserialize
-        if ref.key in cache:
-            kv_pairs[ref.key] = cache[ref.key]
-        else:
-            keys.add(ref.key)
+    refs_by_kvs_name = _group_refs_by_kvs_name(refs)
+    for kvs_name, refs in refs_by_kvs_name.items():
+        deserialize_map = {}
+        keys = set()
 
-    keys = list(keys)
-
-    if len(keys) != 0:
-        returned_kv_pairs = user_states_kvs.get_list(keys)
-
-        # When chaining function executions, we must wait, so we check to see
-        # if certain values have not been resolved yet.
-        while None in returned_kv_pairs.values():
-            returned_kv_pairs = user_states_kvs.get(keys)
-
-        for key in keys:
-            # Because references might be repeated, we check to make sure that
-            # we haven't already deserialized this ref.
-            if deserialize_map[key] and isinstance(returned_kv_pairs[key],
-                                                   Lattice):
-                kv_pairs[key] = serializer.load_lattice(returned_kv_pairs[key])
+        for ref in refs:
+            deserialize_map[ref.key] = ref.deserialize
+            if ref.key in cache:
+                kv_pairs[ref.key] = cache[ref.key]
             else:
-                kv_pairs[key] = returned_kv_pairs[key].reveal()
+                keys.add(ref.key)
 
-            # Cache the deserialized payload for future use
-            cache[key] = kv_pairs[key]
+        keys = list(keys)
+
+        if len(keys) != 0:
+            returned_kv_pairs = user_states_kvs.get_list(keys)
+
+            # When chaining function executions, we must wait, so we check to see
+            # if certain values have not been resolved yet.
+            while None in returned_kv_pairs.values():
+                returned_kv_pairs = user_states_kvs.get(keys)
+
+            for key in keys:
+                # Because references might be repeated, we check to make sure that
+                # we haven't already deserialized this ref.
+                if deserialize_map[key] and isinstance(returned_kv_pairs[key],
+                                                    Lattice):
+                    kv_pairs[key] = serializer.load_lattice(returned_kv_pairs[key])
+                else:
+                    kv_pairs[key] = returned_kv_pairs[key].reveal()
+
+                # Cache the deserialized payload for future use
+                cache[key] = kv_pairs[key]
 
     return kv_pairs
 
+def _group_refs_by_kvs_name(refs):
+    refs_by_kvs_name = {}
+    for ref in refs:
+        if ref.kvs_name not in refs_by_kvs_name:
+            refs_by_kvs_name[ref.kvs_name] = []
+        refs_by_kvs_name[ref.kvs_name].append(ref)
+    return refs_by_kvs_name
 
 def _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
                         dependencies):

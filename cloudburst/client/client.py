@@ -34,11 +34,12 @@ from cloudburst.shared.utils import (
     DAG_CALL_PORT,
     DAG_CREATE_PORT,
     DAG_DELETE_PORT,
+    DEFAULT_CLIENT_NAME,
     FUNC_CALL_PORT,
     FUNC_CREATE_PORT,
     LIST_PORT
 )
-from cloudburst.shared.kvs_client import AnnaKvsClient, RedisKvsClient, ShredderKvsClient
+from cloudburst.shared.kvs_client import AnnaKvsClient, KvsClient
 
 serializer = Serializer()
 
@@ -59,18 +60,18 @@ class CloudburstConnection():
         self.service_addr = 'tcp://' + func_addr + ':%d'
         self.context = zmq.Context(1)
 
-        kvs_addr, states_type, states_addr = self._connect()
-        while not kvs_addr or not states_type or not states_addr:
+        kvs_addr, user_states = self._connect()
+        while not kvs_addr or not user_states:
             logging.info('Connection timed out, retrying')
             print('Connection timed out, retrying')
-            kvs_addr, states_type, states_addr = self._connect()
+            kvs_addr, user_states = self._connect()
 
         # Picks a random offset of 10, mostly to alleviate port conflicts when
         # running in local mode.
         self.kvs_client = AnnaKvsClient(kvs_addr, ip, local=local,
                                         offset=tid + 10)
         
-        self.states_client = self._get_states_kvs(self.kvs_client, states_type, states_addr)
+        self.states_client = self._get_states_kvs(self.kvs_client, user_states)
 
         self.func_create_sock = self.context.socket(zmq.REQ)
         self.func_create_sock.connect(self.service_addr % FUNC_CREATE_PORT)
@@ -297,21 +298,21 @@ class CloudburstConnection():
 
         return r.success, r.error
 
-    def get_object(self, key):
+    def get_object(self, key, client_name=DEFAULT_CLIENT_NAME):
         '''
         Retrieves an arbitrary key from the KVS, automatically deserializes it,
         and returns the value to the user.
         '''
-        lattice = self.states_client.get(key)
+        lattice = self.states_client.get(key, client_name)
         return serializer.load_lattice(lattice)
 
-    def put_object(self, key, value):
+    def put_object(self, key, value, client_name=DEFAULT_CLIENT_NAME):
         '''
         Automatically wraps an object in a lattice and puts it into the
         key-value store at the desired key.
         '''
         lattice = serializer.dump_lattice(value)
-        return self.states_client.put(key, lattice)
+        return self.states_client.put(key, lattice, client_name)
 
     def exec_func(self, name, args):
         call = FunctionCall()
@@ -331,6 +332,12 @@ class CloudburstConnection():
 
         self.rid += 1
         return r.response_id
+    
+    def get_states_client_names(self):
+        return self.states_client.get_client_names()
+    
+    def get_states_client_types(self):
+        return self.states_client.get_client_types()
 
     def _connect(self):
         sckt = self.context.socket(zmq.REQ)
@@ -340,9 +347,9 @@ class CloudburstConnection():
 
         try:
             result = sckt.recv_string()
-            anna_ip, states_type, states_ip = result.split('#')
-            print("Received CONNECT response: %s, %s, %s" % (anna_ip, states_type, states_ip))
-            return anna_ip, states_type, states_ip
+            anna_ip, user_states = result.split('#')
+            print("Received CONNECT response: %s, %s" % (anna_ip, user_states))
+            return anna_ip, user_states
         except zmq.ZMQError as e:
             if e.errno == zmq.EAGAIN:
                 return None
@@ -357,12 +364,9 @@ class CloudburstConnection():
         flist.ParseFromString(self.list_sock.recv())
         return flist.keys
 
-    def _get_states_kvs(self, anna_client, typ, ip):
-        if typ == 'anna':
-            return anna_client
-        elif typ == 'shredder':
-            return ShredderKvsClient(host=ip, port=6379, db=0)
-        elif typ == 'redis':
-            return RedisKvsClient(host=ip, port=6379, db=0)
-        else: raise RuntimeError(f"kvs type {typ} was not supported")
+    def _get_states_kvs(self, anna_client, user_states):
+        states_client = KvsClient(user_states)
+        states_client.add_client(client_name=DEFAULT_CLIENT_NAME, client=anna_client)
+        return states_client
+
             

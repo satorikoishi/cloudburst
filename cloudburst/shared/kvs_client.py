@@ -2,10 +2,9 @@ from anna.client import AnnaTcpClient
 from redis import Redis
 from cloudburst.shared.anna_ipc_client import AnnaIpcClient
 from cloudburst.shared.serializer import Serializer
+from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 serializer = Serializer()
-
-DEFAULT_KVS_NAME = 'anna'
 
 class AbstractKvsClient():
     
@@ -144,28 +143,35 @@ class KvsClient():
             raise ValueError('client name {} already exists'.format(client_name))
         self.clients[client_name] = client
 
-    def get(self, key, client_name=DEFAULT_KVS_NAME):
-        return self.clients[client_name].get(key)
+    def get_client(self, client_name=DEFAULT_CLIENT_NAME):
+        kvs = self.clients.get(client_name)
+        if kvs is None:
+            raise ValueError(f"Invalid client name: {client_name}")
+        return kvs
 
-    def get_list(self, keys, client_name=DEFAULT_KVS_NAME):
-        return self.clients[client_name].get_list(keys)
+    def get(self, key, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).get(key)
+
+    def get_list(self, keys, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).get_list(keys)
     
-    def put(self, key, val, client_name=DEFAULT_KVS_NAME):
-        return self.clients[client_name].put(key, val)
+    def put(self, key, val, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).put(key, val)
     
-    def put_list(self, keys, vals, client_name=DEFAULT_KVS_NAME):
-        return self.clients[client_name].put_list(keys, vals)
+    def put_list(self, keys, vals, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).put_list(keys, vals)
     
-    def execute_command(self, *args, client_name=DEFAULT_KVS_NAME):
-        return self.clients[client_name].execute_command(*args)
+    def causal_get(self, keys, future_read_set, key_version_locations, consistency, client_id, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).causal_get(keys, future_read_set, key_version_locations, consistency, client_id)
     
-    def get_client(self, client_name=DEFAULT_KVS_NAME):
-        return self.clients[client_name]
+    def execute_command(self, *args, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).execute_command(*args)
+    
+    def get_client_type(self, client_name=DEFAULT_CLIENT_NAME):
+        return self.get_client(client_name).__class__.__name__
     
     def get_client_names(self):
         return self.clients.keys()
     
     def get_client_types(self):
         return [client.__class__.__name__ for client in self.clients.values()]
-
-    

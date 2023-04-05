@@ -13,7 +13,11 @@
 #  limitations under the License.
 
 
+from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
+
+
 class CloudburstReference():
-    def __init__(self, key, deserialize):
+    def __init__(self, key, deserialize, kvs_name=DEFAULT_CLIENT_NAME):
         self.key = key
         self.deserialize = deserialize
+        self.kvs_name = kvs_name

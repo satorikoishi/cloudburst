@@ -100,7 +100,7 @@ def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
         client = AnnaTcpClient('127.0.0.1', '127.0.0.1', local=True, offset=1)
         local = True
 
-    states_client = get_states_kvs(client, user_states['type'], user_states['ip'])
+    states_client = get_states_kvs(client, user_states)
 
     # user_library = CloudburstUserLibrary(context, pusher_cache, ip, thread_id,
     #                                   client)
@@ -250,7 +250,7 @@ def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
 
                     if fname not in function_cache:
                         logging.error('%s not in function cache', fname)
-                        utils.generate_error_response(schedule, states_client, fname)
+                        utils.generate_error_response(schedule, client, fname)
                         continue
 
                     # We don't support actual batching for when we receive a
@@ -354,7 +354,7 @@ def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
 
                     if fname not in function_cache:
                         logging.error('%s not in function cache', fname)
-                        utils.generate_error_response(schedule, states_client, fname)
+                        utils.generate_error_response(schedule, client, fname)
                         continue
 
                     trigger_sets.append(triggers)

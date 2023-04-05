@@ -32,3 +32,6 @@ DAG_CALL_PORT = 5005
 
 # The port on which DAG deletion requests are made.
 DAG_DELETE_PORT = 5006
+
+# The name of the default KVS states client.
+DEFAULT_CLIENT_NAME = 'anna'
