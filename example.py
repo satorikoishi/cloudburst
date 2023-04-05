@@ -3,6 +3,9 @@ from cloudburst.shared.reference import CloudburstReference
 
 local_cloud = CloudburstConnection('127.0.0.1', '127.0.0.1', local=True)
 
+print(f'states client names {local_cloud.get_states_client_names()}')
+print(f'states client types {local_cloud.get_states_client_types()}')
+
 # put and get states
 for i in range(5):
     print(f"putting value of key {i}: {i*5}")
@@ -48,6 +51,7 @@ def shredder_example(user_lib):
         results_list.append(user_lib.execute_js_fun('get', '0'))
         results_list.append(user_lib.execute_js_fun('count_friend_list', '0', '1'))
         results_list.append(user_lib.execute_js_fun('predict'))
+        results_list.append(user_lib.execute_js_fun('list_traversal', '0', '2'))
     except Exception as e:
         results_list.append(f'Error: {e}')
 

@@ -16,6 +16,7 @@ import zmq
 
 import cloudburst.server.utils as sutils
 from cloudburst.shared.serializer import Serializer
+from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 serializer = Serializer()
 
@@ -145,14 +146,14 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
         self.recv_inbox_socket = context.socket(zmq.PULL)
         self.recv_inbox_socket.bind(self.address)
 
-    def put(self, ref, value):
-        return self.client.put(ref, serializer.dump_lattice(value))
+    def put(self, ref, value, client_name=DEFAULT_CLIENT_NAME):
+        return self.client.put(ref, serializer.dump_lattice(value), client_name)
 
-    def get(self, ref, deserialize=True):
-        ref = ref if type(ref) == str else str(ref)
+    def get(self, ref, deserialize=True, client_name=DEFAULT_CLIENT_NAME):
         refs = ref if type(ref) == list else [ref]
-
-        kv_pairs = self.client.get_list(refs)
+        refs = [str(item) if type(item) != str else item for item in refs]
+        print(f'user lib get client_name: {client_name}')
+        kv_pairs = self.client.get_list(refs, client_name)
         result = {}
 
         # Deserialize each of the lattice objects and return them to the
@@ -167,7 +168,7 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
                 else:
                     result[key] = kv_pairs[key].reveal()
 
-        return result if type(ref) == list else result[ref]
+        return result if type(ref) == list else (result[ref] if type(ref) == str else result[str(ref)])
 
     def getid(self):
         return (self.executor_ip, self.executor_tid)
@@ -207,9 +208,9 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
         # messages.
         self.recv()
 
-    def execute_js_fun(self, name, *args):
+    def execute_js_fun(self, name, *args, client_name='shredder'):
         try:
-            res = self.client.execute_command("JS", name, *args)
+            res = self.client.execute_command("JS", name, *args, client_name=client_name)
         except Exception as e:
             print(f"Error when execute js fun: {e}")
             raise e

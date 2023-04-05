@@ -128,13 +128,13 @@ class KvsClient():
         self.clients =  {}
         for conf in kvs_list:
             if conf['type'] == 'anna':
-                self.clients[conf['name']] = AnnaKvsClient(conf['addr'], conf['ip'], conf.get('local', default=None), conf.get('offset', default=None))
+                self.clients[conf['name']] = AnnaKvsClient(conf['addr'], conf['ip'], conf.get('local', None), conf.get('offset', None))
             elif conf['type'] == 'anna_ipc':
                 raise NotImplementedError('anna_ipc kvs client can not be created directly by KvsClient')
             elif conf['type'] == 'redis':
-                self.clients[conf['name']] = RedisKvsClient(conf['host'], conf['port'], conf.get('db', default=0))
+                self.clients[conf['name']] = RedisKvsClient(conf['host'], conf['port'], conf.get('db', 0))
             elif conf['type'] == 'shredder':
-                self.clients[conf['name']] = ShredderKvsClient(conf['host'], conf['port'], conf.get('db', default=0))
+                self.clients[conf['name']] = ShredderKvsClient(conf['host'], conf['port'], conf.get('db', 0))
             else:
                 raise ValueError('Invalid kvs type: {}'.format(conf['type']))
             

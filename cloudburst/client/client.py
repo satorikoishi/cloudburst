@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import json
 import logging
 
 import zmq
@@ -71,7 +72,7 @@ class CloudburstConnection():
         self.kvs_client = AnnaKvsClient(kvs_addr, ip, local=local,
                                         offset=tid + 10)
         
-        self.states_client = self._get_states_kvs(self.kvs_client, user_states)
+        self.states_client = self._get_states_kvs(self.kvs_client, json.loads(user_states))
 
         self.func_create_sock = self.context.socket(zmq.REQ)
         self.func_create_sock.connect(self.service_addr % FUNC_CREATE_PORT)

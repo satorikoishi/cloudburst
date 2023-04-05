@@ -174,12 +174,12 @@ def _resolve_ref_normal(refs, user_states_kvs, cache):
         keys = list(keys)
 
         if len(keys) != 0:
-            returned_kv_pairs = user_states_kvs.get_list(keys)
+            returned_kv_pairs = user_states_kvs.get_list(keys, kvs_name)
 
             # When chaining function executions, we must wait, so we check to see
             # if certain values have not been resolved yet.
             while None in returned_kv_pairs.values():
-                returned_kv_pairs = user_states_kvs.get(keys)
+                returned_kv_pairs = user_states_kvs.get(keys, kvs_name)
 
             for key in keys:
                 # Because references might be repeated, we check to make sure that
