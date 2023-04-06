@@ -152,7 +152,6 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
     def get(self, ref, deserialize=True, client_name=DEFAULT_CLIENT_NAME):
         refs = ref if type(ref) == list else [ref]
         refs = [str(item) if type(item) != str else item for item in refs]
-        print(f'user lib get client_name: {client_name}')
         kv_pairs = self.client.get_list(refs, client_name)
         result = {}
 

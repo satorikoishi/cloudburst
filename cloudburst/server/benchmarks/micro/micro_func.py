@@ -12,18 +12,19 @@ from cloudburst.shared.reference import CloudburstReference
 # Args: dag_name, v_size
 
 def run(cloudburst_client, num_requests, sckt, args):
-    if len(args) < 2:
-        print(f"{args} too short. Args at least 2: dag_name, v_size")
+    if len(args) < 3:
+        print(f"{args} too short. Args at least 2: client_name, dag_name, v_size")
         sys.exit(1)
     
-    dag_name = args[0]
-    v_size = int(args[1])
+    client_name = args[0]
+    dag_name = args[1]
+    v_size = int(args[2])
     
-    if v_size not in meta.ARR_SIZE:
-        print(f'{v_size} not in {meta.ARR_SIZE}')
+    if v_size not in meta.ARR_SIZE[client_name]:
+        print(f'{v_size} not in {meta.ARR_SIZE[client_name]}')
         sys.exit(1)
 
-    logging.info(f'Running micro bench. Dag: {dag_name}, Vsize: {v_size}')
+    logging.info(f'Running micro bench. KVS client: {client_name}, Dag: {dag_name}, Vsize: {v_size}')
 
     total_time = []
     scheduler_time = []
@@ -41,7 +42,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
         
         # DAG name = Function name
-        arg_map = {dag_name: key}
+        arg_map = {dag_name: [key, client_name]}
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map)
