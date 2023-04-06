@@ -102,7 +102,7 @@ def shredder_setup_data(cloudburst_client):
     cloud_setup_shredder = cloudburst_client.get_function('setup_shredder')
     if cloud_setup_shredder is None:
         def setup_shredder(cloudburst):
-            return cloudburst.execute_js_fun('setup')
+            return cloudburst.execute_js_fun('setup', client_name='shredder')
         cloud_setup_shredder = cloudburst_client.register(setup_shredder, 'setup_shredder')
         if cloud_setup_shredder:
             logging.info('Successfully registered setup shredder function.')

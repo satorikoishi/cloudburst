@@ -8,12 +8,13 @@ import numpy as np
 
 from cloudburst.server.benchmarks import utils
 from cloudburst.shared.reference import CloudburstReference
+from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 # Args: k
-python_dag_name = 'list_traversal'
+local_dag_name = 'list_traversal'
 
 # JS rpc version
-js_dag_name = 'js_list_traversal'
+rpc_dag_name = 'rpc_list_traversal'
 
 # 1000 lists, out of 10000 numbers
 UPPER_BOUND = 10000
@@ -54,9 +55,9 @@ def gen_nodeid(id):
 def key_args():
     return '100000'
 
-def generate_dataset(cloudburst_client):    
+def generate_dataset(cloudburst_client, client_name):    
     splitter = np.arange(0, UPPER_BOUND, 10).tolist()
-    cloudburst_client.put_object(key_args(), splitter)
+    cloudburst_client.put_object(key_args(), splitter, client_name=client_name)
     splitter = splitter + [0]
     
     for offset in range(1000):
@@ -73,60 +74,61 @@ def generate_dataset(cloudburst_client):
         # First element points to next list
         list_slice[0] = next
         
-        cloudburst_client.put_object(gen_nodeid(cur), list_slice)
+        cloudburst_client.put_object(gen_nodeid(cur), list_slice, client_name=client_name)
             
     logging.info('Finished generating dataset')
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
-    def list_traversal(cloudburst, nodeid, depth):
+    def list_traversal(cloudburst, nodeid, depth, client_name=DEFAULT_CLIENT_NAME):
         for i in range(depth):
-            nodeid = cloudburst.get(gen_nodeid(nodeid))[0]
+            nodeid = cloudburst.get(gen_nodeid(nodeid), client_name=client_name)[0]
         return nodeid
 
-    cloud_list_traversal = cloudburst_client.register(list_traversal, python_dag_name)
+    cloud_list_traversal = cloudburst_client.register(list_traversal, local_dag_name)
     if cloud_list_traversal:
         logging.info('Successfully registered function.')
     else:
         print('Failed registered function.')
         sys.exit(1)
 
-    def js_list_traversal(cloudburst, nodeid, depth):
-        nodeid = cloudburst.execute_js_fun('list_traversal', nodeid, depth)
+    def rpc_list_traversal(cloudburst, nodeid, depth, client_name='shredder'):
+        nodeid = cloudburst.execute_js_fun('list_traversal', nodeid, depth, client_name=client_name)
         return nodeid
     
-    cloud_js_list_traversal = cloudburst_client.register(js_list_traversal, js_dag_name)
-    if cloud_js_list_traversal:
+    cloud_rpc_list_traversal = cloudburst_client.register(rpc_list_traversal, rpc_dag_name)
+    if cloud_rpc_list_traversal:
         logging.info('Successfully registered function.')
     else:
         print('Failed registered function.')
         sys.exit(1)
     
     ''' REGISTER DAG '''
-    utils.register_dag_for_single_func(cloudburst_client, python_dag_name)
-    utils.register_dag_for_single_func(cloudburst_client, js_dag_name)
+    utils.register_dag_for_single_func(cloudburst_client, local_dag_name)
+    utils.register_dag_for_single_func(cloudburst_client, rpc_dag_name)
     logging.info('Finished registering dag')
     
 
 def run(cloudburst_client, num_requests, sckt, args):
-    if len(args) < 1:
-        print(f"{args} too short. Args: depth")
+    if len(args) < 2 and args[0] != 'c':
+        print(f"{args} too short. Args: kvs_name, depth")
         sys.exit(1)
-    
+
     if args[0] == 'c':
         # Create dataset and DAG
-        generate_dataset(cloudburst_client)
+        generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
+        utils.shredder_setup_data(cloudburst_client)
         create_dag(cloudburst_client)
-        if args[1] == 'shredder':
-            utils.shredder_setup_data(cloudburst_client)
         return [], [], [], 0
     
-    dag_name, depth = (js_dag_name, args[1]) if args[0] == 'js' else (python_dag_name, int(args[0]))
+    client_name = args[0]
+    depth = int(args[1])
 
-    # depth = int(args[0])
+    dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
+
     nodeid_list = cloudburst_client.get_object(key_args())
     
-    logging.info(f'Running list traversal, depth {depth}, dag: {dag_name}')
+    logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
 
     total_time = []
     scheduler_time = []
@@ -142,7 +144,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     for i in range(num_requests):
         nodeid = random.choice(nodeid_list)
         # DAG name = Function name
-        arg_map = {dag_name: [nodeid, depth]}
+        arg_map = {dag_name: [nodeid, depth, client_name]}
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map)
