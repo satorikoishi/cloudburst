@@ -75,8 +75,11 @@ echo "mgmt_ip: $MGMT_IP" >> conf/cloudburst-config.yml
 
 # User state ip and type
 echo "user_states:" >> conf/cloudburst-config.yml
-echo "    ip: $USER_STATE_IP" >> conf/cloudburst-config.yml
+echo "  -" >> conf/cloudburst-config.yml
+echo "    name: $USER_STATE_TYPE" >> conf/cloudburst-config.yml
 echo "    type: $USER_STATE_TYPE" >> conf/cloudburst-config.yml
+echo "    host: $USER_STATE_IP" >> conf/cloudburst-config.yml 
+echo "    port: 6379" >> conf/cloudburst-config.yml
 
 # Add the current directory to the PYTHONPATH in order to resolve imports
 # correctly.
