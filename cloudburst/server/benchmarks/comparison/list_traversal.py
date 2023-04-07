@@ -180,12 +180,13 @@ def run(cloudburst_client, num_requests, sckt, args):
 
     return total_time, scheduler_time, kvs_time, retries
 
-def client_call_dag(cloudburst_client, q, *args):
+def client_call_dag(cloudburst_client, stop_event, q, *args):
     nodeid_list, dag_name, depth = args
     logging.info(f'dag_name: {dag_name}, depth: {depth}')
     while True:
+        if stop_event.is_set():
+            break
         c_id = q.get()
-        logging.info(f'Client id: {c_id}')
         nodeid = random.choice(nodeid_list)
         # DAG name = Function name
         arg_map = {dag_name: [nodeid, depth]}
@@ -211,12 +212,13 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
     profiler = utils.Profiler()
 
-    client_q = queue.Queue()
+    client_q = queue.Queue(maxsize=num_clients)
     for i in range(num_clients):
-        client_q.put(utils.C_ID_BASE + i)
+        client_q.put(f'{utils.C_ID_BASE + i}')
     
-    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, client_q, nodeid_list, dag_name, depth), daemon=True)
-    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, client_q, profiler), daemon=True)
+    stop_event = threading.Event()
+    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_q, nodeid_list, dag_name, depth), daemon=True)
+    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_q, profiler), daemon=True)
     
     call_worker.start()
     recv_worker.start()
@@ -224,5 +226,9 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     for i in range(2):
         time.sleep(5)
         profiler.print_tput()
+
+    stop_event.set()
+    call_worker.join()
+    recv_worker.join()
     
     return [], [], [], 0

@@ -143,8 +143,14 @@ def shredder_setup_data(cloudburst_client):
     logging.info(f'Setup shredder result: {res}')
 
 # For testing Tput
-def client_recv_dag_response(cloudburst_client, q, profiler):
+def client_recv_dag_response(cloudburst_client, stop_event, q, profiler):
     while True:
-        c_id, _ = cloudburst_client.async_recv_dag_response()
-        q.put(c_id)
+        res = cloudburst_client.async_recv_dag_response()
+        if res == None:
+            continue
+        c_id, _ = res
+        q.put(c_id)    
         profiler.incr() # TODO: latency?
+        
+        if stop_event.is_set() and q.full():
+            break
