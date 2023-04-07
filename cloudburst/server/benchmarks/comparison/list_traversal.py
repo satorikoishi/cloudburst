@@ -180,6 +180,18 @@ def run(cloudburst_client, num_requests, sckt, args):
 
     return total_time, scheduler_time, kvs_time, retries
 
+def client_call_dag(cloudburst_client, q, *args):
+    nodeid_list, dag_name, depth = args
+    print(f'dag_name: {dag_name}, depth: {depth}')
+    while True:
+        c_id = q.get()
+        print(f'Client id: {c_id}')
+        nodeid = random.choice(nodeid_list)
+        # DAG name = Function name
+        arg_map = {dag_name: [nodeid, depth]}
+        
+        cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
+
 def run_tput_example(cloudburst_client, num_clients, sckt, args):
     if len(args) < 2 and args[0] != 'c':
         print(f"{args} too short. Args: kvs_name, depth")
@@ -203,24 +215,14 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     for i in range(num_clients):
         client_q.put(utils.C_ID_BASE + i)
     
-    def client_call_dag(cloudburst_client, q, *args):
-        nodeid_list, dag_name, depth = args
-        while True:
-            c_id = q.get()
-            nodeid = random.choice(nodeid_list)
-            # DAG name = Function name
-            arg_map = {dag_name: [nodeid, depth]}
-            
-            cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
-        
     call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, client_q, nodeid_list, dag_name, depth), daemon=True)
     recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, client_q, profiler), daemon=True)
     
     call_worker.start()
     recv_worker.start()
     
-    for i in range(10):
-        time.sleep(10)
+    for i in range(2):
+        time.sleep(5)
         profiler.print_tput()
     
     return [], [], [], 0

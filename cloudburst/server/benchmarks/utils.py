@@ -49,6 +49,7 @@ class Profiler():
         with self.thread_lock:
             self.tput = 0
         self.clock = time.time()
+        self.epoch += 1
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
