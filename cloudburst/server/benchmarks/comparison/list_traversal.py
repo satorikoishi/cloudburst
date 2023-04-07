@@ -223,8 +223,8 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     call_worker.start()
     recv_worker.start()
     
-    for i in range(2):
-        time.sleep(5)
+    for i in range(5):
+        time.sleep(10)
         profiler.print_tput()
 
     stop_event.set()
