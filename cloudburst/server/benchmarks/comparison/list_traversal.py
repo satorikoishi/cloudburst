@@ -2,6 +2,8 @@ import logging
 import random
 import sys
 import time
+import queue
+import threading
 
 import cloudpickle as cp
 import numpy as np
@@ -121,6 +123,10 @@ def run(cloudburst_client, num_requests, sckt, args):
         create_dag(cloudburst_client)
         return [], [], [], 0
     
+    if len(args) == 3:
+        assert(args[2] == "tput")
+        return run_tput_example(cloudburst_client, num_requests, sckt, args)
+    
     client_name = args[0]
     depth = int(args[1])
 
@@ -173,3 +179,48 @@ def run(cloudburst_client, num_requests, sckt, args):
             log_start = time.time()
 
     return total_time, scheduler_time, kvs_time, retries
+
+def run_tput_example(cloudburst_client, num_clients, sckt, args):
+    if len(args) < 2 and args[0] != 'c':
+        print(f"{args} too short. Args: kvs_name, depth")
+        sys.exit(1)
+
+    if args[0] == 'c':
+        # Create dataset and DAG
+        generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
+        utils.shredder_setup_data(cloudburst_client)
+        create_dag(cloudburst_client)
+        return [], [], [], 0
+    
+    client_name = args[0]
+    depth = int(args[1])
+    dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
+    nodeid_list = cloudburst_client.get_object(key_args())
+    logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
+    profiler = utils.Profiler()
+
+    client_q = queue.Queue()
+    for i in range(num_clients):
+        client_q.put(utils.C_ID_BASE + i)
+    
+    def client_call_dag(cloudburst_client, q, *args):
+        nodeid_list, dag_name, depth = args
+        while True:
+            c_id = q.get()
+            nodeid = random.choice(nodeid_list)
+            # DAG name = Function name
+            arg_map = {dag_name: [nodeid, depth]}
+            
+            cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
+        
+    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, client_q, nodeid_list, dag_name, depth), daemon=True)
+    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, client_q, profiler), daemon=True)
+    
+    call_worker.start()
+    recv_worker.start()
+    
+    for i in range(10):
+        time.sleep(10)
+        profiler.print_tput()
+    
+    return [], [], [], 0

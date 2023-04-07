@@ -369,7 +369,12 @@ def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, 
                     sckt = pusher_cache.get(schedule.response_address)
                     logging.info('DAG %s (ID %s) result returned to requester.' %
                                  (schedule.dag.name, trigger.id))
-                    sckt.send(serializer.dump(result))
+                    # WARNING: Only changed in normal, not in causal
+                    if schedule.output_key:
+                        # Send back result with specified key, to identify client
+                        sckt.send(serializer.dump([schedule.output_key, result]))
+                    else:
+                        sckt.send(serializer.dump(result))
         else:
             keys = []
             lattices = []

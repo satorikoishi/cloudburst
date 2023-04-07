@@ -213,7 +213,7 @@ class CloudburstConnection():
 
         return r.success, r.error
 
-    def call_dag(self, dname, arg_map, direct_response=False,
+    def call_dag(self, dname, arg_map, direct_response=False, async_response=False,
                  consistency=NORMAL, output_key=None, client_id=None,
                  dry_run=False, continuation=None):
         '''
@@ -233,6 +233,9 @@ class CloudburstConnection():
         dc = DagCall()
         dc.name = dname
         dc.consistency = consistency
+
+        if async_response and not output_key:
+            raise RuntimeError('Must specify output_key for async response')
 
         if output_key:
             dc.output_key = output_key
@@ -270,21 +273,35 @@ class CloudburstConnection():
 
         if r.success:
             if direct_response:
-                try:
-                    result = self.response_sock.recv()
-                    return serializer.load(result)
-                except zmq.ZMQError as e:
-                    if e.errno == zmq.EAGAIN:
-                        logging.error('Request timed out')
-                        return None
-                    else:
-                        raise e
+                if async_response:
+                    return None
+                else:
+                    try:
+                        result = self.response_sock.recv()
+                        return serializer.load(result)
+                    except zmq.ZMQError as e:
+                        if e.errno == zmq.EAGAIN:
+                            logging.error('Request timed out')
+                            return None
+                        else:
+                            raise e
             else:
                 return CloudburstFuture(r.response_id, self.kvs_client,
                                      serializer)
         else:
             logging.error('Scheduler returned unexpected error: \n' + str(r))
             raise RuntimeError(str(r.error))
+    
+    def async_recv_dag_response(self):
+        try:
+            result = self.response_sock.recv()
+            return serializer.load(result)
+        except zmq.ZMQError as e:
+            if e.errno == zmq.EAGAIN:
+                logging.error('Request timed out')
+                return None
+            else:
+                raise e
 
     def delete_dag(self, dname):
         '''

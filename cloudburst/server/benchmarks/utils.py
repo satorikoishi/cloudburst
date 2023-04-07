@@ -17,10 +17,38 @@ import logging
 import numpy as np
 import sys
 import csv
+import queue
+import threading
+import time
 from cloudburst.shared.proto.cloudburst_pb2 import CloudburstError, DAG_ALREADY_EXISTS
 
 BENCHMARK_START_PORT = 3000
 TRIGGER_PORT = 2999
+C_ID_BASE = 1234567890
+
+class Profiler():
+    def __init__(self):
+        self.tput = 0
+        self.lat = []
+        self.epoch = 0
+        self.thread_lock = threading.Lock()
+        self.clock = time.time()
+        
+    def incr(self):
+        with self.thread_lock:
+            self.tput += 1
+    
+    def print_tput(self):
+        duration = time.time() - self.clock
+        tput = (float)(self.tput) / duration
+        output = f"""EPOCH {self.epoch}, THROUGHPUT: {tput} /s, DURATION: {duration} s"""
+        print(output)
+        logging.info(output)
+        
+        # Reset counter
+        with self.thread_lock:
+            self.tput = 0
+        self.clock = time.time()
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
@@ -112,3 +140,10 @@ def shredder_setup_data(cloudburst_client):
     
     res = cloud_setup_shredder().get()
     logging.info(f'Setup shredder result: {res}')
+
+# For testing Tput
+def client_recv_dag_response(cloudburst_client, q, profiler):
+    while True:
+        c_id, _ = cloudburst_client.async_recv_dag_response()
+        q.put(c_id)
+        profiler.incr() # TODO: latency?
