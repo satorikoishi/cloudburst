@@ -182,10 +182,10 @@ def run(cloudburst_client, num_requests, sckt, args):
 
 def client_call_dag(cloudburst_client, q, *args):
     nodeid_list, dag_name, depth = args
-    print(f'dag_name: {dag_name}, depth: {depth}')
+    logging.info(f'dag_name: {dag_name}, depth: {depth}')
     while True:
         c_id = q.get()
-        print(f'Client id: {c_id}')
+        logging.info(f'Client id: {c_id}')
         nodeid = random.choice(nodeid_list)
         # DAG name = Function name
         arg_map = {dag_name: [nodeid, depth]}
