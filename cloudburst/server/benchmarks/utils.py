@@ -30,24 +30,44 @@ def gen_c_id(offset):
     return f'{C_ID_BASE + offset}'
 
 class Profiler():
-    def __init__(self):
+    def __init__(self, bname=None, num_clients=0, args=[]):
         self.tput = 0
         self.lat = []
         self.epoch = 0
         self.thread_lock = threading.Lock()
         self.clock = time.time()
+
+        self.bname = bname
+        self.num_clients = num_clients
+        self.args = args
         
     def commit(self, latency):
         with self.thread_lock:
             self.tput += 1
             self.lat.append(latency)
     
-    def print_tput(self):
+    def print_tput(self, csv_filename=None):
         duration = time.time() - self.clock
         tput = (float)(self.tput) / duration
         output = f"""EPOCH {self.epoch}, THROUGHPUT: {tput} /s, DURATION: {duration} s"""
         print(output)
         logging.info(output)
+
+        if csv_filename:
+            args = ":".join(self.args) if self.args else None
+            csv_output = {
+                'BNAME': self.bname,
+                'EPOCH': self.epoch,
+                'NUM_CLIENTS': self.num_clients,  
+                'ARGS': args,
+                'THROUGHPUT': tput, 
+                'DURATION(s)': duration,
+            }
+            with open(csv_filename, 'a', newline='') as csv_file:
+                writer = csv.DictWriter(csv_file, delimiter='\t', fieldnames=csv_output.keys())
+                if csv_file.tell() == 0:
+                    writer.writeheader()
+                writer.writerow(csv_output)
         
         # Reset counter
         with self.thread_lock:

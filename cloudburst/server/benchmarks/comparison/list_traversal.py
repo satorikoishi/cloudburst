@@ -211,8 +211,8 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
     nodeid_list = cloudburst_client.get_object(key_args())
     logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
-    profiler = utils.Profiler()
     client_meta_dict = {}
+    profiler = utils.Profiler(bname='list_traversal', num_clients=num_clients, args=args)
 
     client_q = queue.Queue(maxsize=num_clients)
     for i in range(num_clients):
@@ -229,7 +229,7 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     
     for i in range(5):
         time.sleep(10)
-        profiler.print_tput()
+        profiler.print_tput(csv_filename='tput.csv')
 
     stop_event.set()
     call_worker.join()
