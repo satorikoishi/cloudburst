@@ -180,7 +180,7 @@ def run(cloudburst_client, num_requests, sckt, args):
 
     return total_time, scheduler_time, kvs_time, retries
 
-def client_call_dag(cloudburst_client, stop_event, q, *args):
+def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
     nodeid_list, dag_name, depth = args
     logging.info(f'dag_name: {dag_name}, depth: {depth}')
     while True:
@@ -191,6 +191,7 @@ def client_call_dag(cloudburst_client, stop_event, q, *args):
         # DAG name = Function name
         arg_map = {dag_name: [nodeid, depth]}
         
+        meta_dict[c_id].reset()
         cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
 
 def run_tput_example(cloudburst_client, num_clients, sckt, args):
@@ -211,14 +212,17 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     nodeid_list = cloudburst_client.get_object(key_args())
     logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
     profiler = utils.Profiler()
+    client_meta_dict = {}
 
     client_q = queue.Queue(maxsize=num_clients)
     for i in range(num_clients):
-        client_q.put(f'{utils.C_ID_BASE + i}')
+        c_id = utils.gen_c_id(i)
+        client_q.put(c_id)
+        client_meta_dict[c_id] = utils.ClientMeta(c_id)
     
     stop_event = threading.Event()
-    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_q, nodeid_list, dag_name, depth), daemon=True)
-    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_q, profiler), daemon=True)
+    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_meta_dict, client_q, nodeid_list, dag_name, depth), daemon=True)
+    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_meta_dict, client_q, profiler), daemon=True)
     
     call_worker.start()
     recv_worker.start()
@@ -231,4 +235,4 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     call_worker.join()
     recv_worker.join()
     
-    return [], [], [], 0
+    return profiler.lat, [], [], 0

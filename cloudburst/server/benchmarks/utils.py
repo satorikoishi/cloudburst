@@ -26,6 +26,9 @@ BENCHMARK_START_PORT = 3000
 TRIGGER_PORT = 2999
 C_ID_BASE = 1234567890
 
+def gen_c_id(offset):
+    return f'{C_ID_BASE + offset}'
+
 class Profiler():
     def __init__(self):
         self.tput = 0
@@ -34,9 +37,10 @@ class Profiler():
         self.thread_lock = threading.Lock()
         self.clock = time.time()
         
-    def incr(self):
+    def commit(self, latency):
         with self.thread_lock:
             self.tput += 1
+            self.lat.append(latency)
     
     def print_tput(self):
         duration = time.time() - self.clock
@@ -50,6 +54,17 @@ class Profiler():
             self.tput = 0
         self.clock = time.time()
         self.epoch += 1
+
+class ClientMeta():
+    def __init__(self, c_id):
+        self.c_id = c_id
+        self.start_time = time.time()
+        
+    def reset(self):
+        self.start_time = time.time()
+    
+    def get_latency(self):
+        return time.time() - self.start_time
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
@@ -143,14 +158,15 @@ def shredder_setup_data(cloudburst_client):
     logging.info(f'Setup shredder result: {res}')
 
 # For testing Tput
-def client_recv_dag_response(cloudburst_client, stop_event, q, profiler):
+def client_recv_dag_response(cloudburst_client, stop_event, meta_dict, q, profiler):
     while True:
         res = cloudburst_client.async_recv_dag_response()
         if res == None:
             continue
         c_id, _ = res
+        lat = meta_dict[c_id].get_latency()
         q.put(c_id)    
-        profiler.incr() # TODO: latency?
+        profiler.commit(lat) 
         
         if stop_event.is_set() and q.full():
             break
