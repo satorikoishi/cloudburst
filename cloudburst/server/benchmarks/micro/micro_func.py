@@ -1,6 +1,8 @@
 import logging
+import queue
 import random
 import sys
+import threading
 import time
 
 import cloudpickle as cp
@@ -11,11 +13,29 @@ from cloudburst.shared.reference import CloudburstReference
 
 # Args: dag_name, v_size
 
+def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
+    client_name, dag_name, v_size = args
+    logging.info(f'kvs_name: {client_name}, dag_name: {dag_name}, v_size: {v_size}')
+    while True:
+        if stop_event.is_set():
+            break
+        c_id = q.get()
+        key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
+        # DAG name = Function name
+        arg_map = {dag_name: [key, client_name]}
+        
+        meta_dict[c_id].reset()
+        cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
+
 def run(cloudburst_client, num_requests, sckt, args):
     if len(args) < 3:
         print(f"{args} too short. Args at least 2: client_name, dag_name, v_size")
         sys.exit(1)
     
+    if len(args) == 4:
+        assert(args[3] == "tput")
+        return run_tput_example(cloudburst_client, num_requests, sckt, args)
+
     client_name = args[0]
     dag_name = args[1]
     v_size = int(args[2])
@@ -71,3 +91,34 @@ def run(cloudburst_client, num_requests, sckt, args):
             log_start = time.time()
 
     return total_time, scheduler_time, kvs_time, retries
+
+def run_tput_example(cloudburst_client, num_clients, sckt, args):
+    client_name = args[0]
+    dag_name = args[1]
+    v_size = int(args[2])
+    logging.info(f'Running list traversal, kvs_name {client_name}, v_size {v_size}, dag: {dag_name}')
+    client_meta_dict = {}
+    profiler = utils.Profiler(bname='micro', num_clients=num_clients, args=args)
+
+    client_q = queue.Queue(maxsize=num_clients)
+    for i in range(num_clients):
+        c_id = utils.gen_c_id(i)
+        client_q.put(c_id)
+        client_meta_dict[c_id] = utils.ClientMeta(c_id)
+    
+    stop_event = threading.Event()
+    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_meta_dict, client_q, client_name, dag_name, v_size), daemon=True)
+    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_meta_dict, client_q, profiler), daemon=True)
+    
+    call_worker.start()
+    recv_worker.start()
+    
+    for i in range(5):
+        time.sleep(10)
+        profiler.print_tput(csv_filename='tput.csv')
+
+    stop_event.set()
+    call_worker.join()
+    recv_worker.join()
+    
+    return profiler.lat, [], [], 0
