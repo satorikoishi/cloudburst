@@ -53,6 +53,7 @@ class Profiler():
     def print_tput(self, csv_filename=None):
         duration = time.time() - self.clock
         epoch_tput = (float)(self.tput) / duration
+        epoch_tput_num=deepcopy(self.tput)
         epoch_lat = deepcopy(self.epoch_lat)
         output = f"""EPOCH {self.epoch}, THROUGHPUT: {epoch_tput} /s, DURATION: {duration} s"""
         print(output)
@@ -67,7 +68,7 @@ class Profiler():
             self.epoch_lat.clear()
         self.clock = time.time()
         self.epoch += 1
-        return epoch_tput, epoch_lat
+        return epoch_tput_num, epoch_lat
 
 class ClientMeta():
     def __init__(self, c_id):
