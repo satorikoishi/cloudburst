@@ -33,6 +33,7 @@ class Profiler():
     def __init__(self, bname=None, num_clients=0, args=[]):
         self.tput = 0
         self.lat = []
+        self.epoch_lat = []
         self.epoch = 0
         self.thread_lock = threading.Lock()
         self.clock = time.time()
@@ -45,35 +46,27 @@ class Profiler():
         with self.thread_lock:
             self.tput += 1
             self.lat.append(latency)
+            self.epoch_lat.append(latency)
+
     
     def print_tput(self, csv_filename=None):
         duration = time.time() - self.clock
-        tput = (float)(self.tput) / duration
-        output = f"""EPOCH {self.epoch}, THROUGHPUT: {tput} /s, DURATION: {duration} s"""
+        epoch_tput = (float)(self.tput) / duration
+        epoch_lat = self.epoch_lat
+        output = f"""EPOCH {self.epoch}, THROUGHPUT: {epoch_tput} /s, DURATION: {duration} s"""
         print(output)
         logging.info(output)
 
         if csv_filename:
-            args = ":".join(self.args) if self.args else None
-            csv_output = {
-                'BNAME': self.bname,
-                'EPOCH': self.epoch,
-                'NUM_CLIENTS': self.num_clients,  
-                'ARGS': args,
-                'THROUGHPUT': tput, 
-                'DURATION(s)': duration,
-            }
-            with open(csv_filename, 'a', newline='') as csv_file:
-                writer = csv.DictWriter(csv_file, delimiter='\t', fieldnames=csv_output.keys())
-                if csv_file.tell() == 0:
-                    writer.writeheader()
-                writer.writerow(csv_output)
+            log_throughput_to_csv(epoch=self.epoch, thruput=epoch_tput, bname=self.bname, num_clients=self.num_clients, args=self.args, duration=duration, csv_filename=csv_filename)
         
         # Reset counter
         with self.thread_lock:
             self.tput = 0
+            self.epoch_lat.clear()
         self.clock = time.time()
         self.epoch += 1
+        return epoch_tput, epoch_lat
 
 class ClientMeta():
     def __init__(self, c_id):
@@ -190,3 +183,19 @@ def client_recv_dag_response(cloudburst_client, stop_event, meta_dict, q, profil
         
         if stop_event.is_set() and q.full():
             break
+
+def log_throughput_to_csv(epoch, thruput, bname, num_clients, args, duration, csv_filename):
+    args = ":".join(args) if args else None
+    csv_output = {
+        'BNAME': bname,
+        'EPOCH': epoch,
+        'NUM_CLIENTS': num_clients,
+        'ARGS': args,
+        'THROUGHPUT': thruput,
+        'DURATION(s)': duration
+    }
+    with open(csv_filename, 'a', newline='') as csv_file:
+        writer = csv.DictWriter(csv_file, delimiter='\t', fieldnames=csv_output.keys())
+        if csv_file.tell() == 0:
+            writer.writeheader()
+        writer.writerow(csv_output)

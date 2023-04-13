@@ -84,7 +84,7 @@ def run(cloudburst_client, num_requests, sckt, args):
             if sckt:
                 sckt.send(cp.dumps(epoch_total))
             utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
-                                        (log_epoch), True, bname='micro', args=args, csv_filename='benchmark.csv')
+                                        (log_epoch), True, bname='micro', args=args, csv_filename='benchmark_lat.csv')
 
             epoch_total.clear()
             log_epoch += 1
@@ -115,7 +115,9 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     
     for i in range(5):
         time.sleep(10)
-        profiler.print_tput(csv_filename='tput.csv')
+        epoch_tput, epoch_lat =  profiler.print_tput(csv_filename='benchmark_tput.csv')
+        # send epoch result to trigger
+        sckt.send(cp.dumps((epoch_tput, epoch_lat)))
 
     stop_event.set()
     call_worker.join()

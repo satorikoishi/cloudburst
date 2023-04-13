@@ -123,11 +123,11 @@ def summary_result(bname, sckt, total, scheduler, kvs, retries, args=[]):
 
     logging.info('Total computation time: %.4f' % (sum(total)))
     if len(total) > 0:
-        utils.print_latency_stats(total, 'E2E', True, bname=bname, args=args, csv_filename="benchmark.csv")
+        utils.print_latency_stats(total, 'E2E', True, bname=bname, args=args, csv_filename="benchmark_lat.csv")
     if len(scheduler) > 0:
-        utils.print_latency_stats(scheduler, 'SCHEDULER', True, bname=bname, args=args, csv_filename="benchmark.csv")
+        utils.print_latency_stats(scheduler, 'SCHEDULER', True, bname=bname, args=args, csv_filename="benchmark_lat.csv")
     if len(kvs) > 0:
-        utils.print_latency_stats(kvs, 'KVS', True, bname=bname, args=args, csv_filename="benchmark.csv")
+        utils.print_latency_stats(kvs, 'KVS', True, bname=bname, args=args, csv_filename="benchmark_lat.csv")
     logging.info('Number of KVS get retries: %d' % (retries))
 
 

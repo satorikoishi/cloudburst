@@ -65,6 +65,8 @@ epoch = 1
 epoch_thruput = 0
 epoch_start = time.time()
 
+bname, num_clients, *args = msg.split(':')
+
 while end_recv < sent_msgs:
     msg = recv_socket.recv()
 
@@ -90,7 +92,9 @@ while end_recv < sent_msgs:
 
             logging.info('\n\n*** EPOCH %d ***' % (epoch))
             logging.info('\tTHROUGHPUT: %.2f' % (thruput))
-            utils.print_latency_stats(epoch_total, 'E2E', True)
+            logging.info('\tELAPSED: %.2f' % (elapsed))
+            utils.print_latency_stats(epoch_total, 'E2E', True, bname=bname, args=args, csv_filename='latency.csv')
+            utils.log_throughput_to_csv(epoch, thruput, bname=bname, num_clients=num_clients, args=args, duration=elapsed, csv_filename='throughput.csv')
 
             epoch_recv = 0
             epoch_thruput = 0
