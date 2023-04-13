@@ -65,7 +65,7 @@ epoch = 1
 epoch_thruput = 0
 epoch_start = time.time()
 
-bname, num_clients, *args = msg.split(':')
+_, bname, num_clients, *args = msg.split(':')
 
 while end_recv < sent_msgs:
     msg = recv_socket.recv()
