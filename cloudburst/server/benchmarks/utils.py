@@ -83,7 +83,7 @@ class ClientMeta():
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
-def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, args=[], csv_filename=None):
+def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, args=[], csv_filename=None, num_clients=1):
     # Amplify according to unit
     data = [x * unit_dict[unit] for x in data]
     
@@ -106,13 +106,14 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, 
     mn = np.min(npdata)
 
     output = ('%s LATENCY:\n\tsample size: %d\n' +
+              '\tNUM_CLIENTS: %d\n'
               '\tTHROUGHPUT: %.4f\n'
               '\tTime unit: %s\n'
               '\tmean: %.3f, median: %.3f\n' +
               '\tmin/max: (%.3f, %.3f)\n' +
               '\tp25/p75: (%.3f, %.3f)\n' +
               '\tp5/p95: (%.3f, %.3f)\n' +
-              '\tp1/p99: (%.3f, %.3f)') % (ident, len(data), tput, unit, mean,
+              '\tp1/p99: (%.3f, %.3f)') % (ident, len(data), num_clients, tput, unit, mean,
                                            median, mn, mx, p25, p75, p05, p95,
                                            p01, p99)
 
@@ -126,6 +127,7 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, 
         csv_output = {
             'BNAME': bname,
             'IDENT': ident, 
+            'NUM_CLIENTS': num_clients,
             'ARGS': args,
             'SAMPLE_SIZE': len(data), 
             'THROUGHPUT': tput, 

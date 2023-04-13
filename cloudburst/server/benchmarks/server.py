@@ -108,9 +108,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
         sckt.send(b'END')
         return
     
-    summary_result(bname, sckt, total, scheduler, kvs, retries, args)
+    summary_result(bname, sckt, total, scheduler, kvs, retries, args, num_requests)
 
-def summary_result(bname, sckt, total, scheduler, kvs, retries, args=[]):
+def summary_result(bname, sckt, total, scheduler, kvs, retries, args=[], num_requests=1):
     # some benchmark modes return no results
     if not total:
         sckt.send(b'END')
@@ -123,11 +123,11 @@ def summary_result(bname, sckt, total, scheduler, kvs, retries, args=[]):
 
     logging.info('Total computation time: %.4f' % (sum(total)))
     if len(total) > 0:
-        utils.print_latency_stats(total, 'E2E', True, bname=bname, args=args, csv_filename="benchmark_lat.csv")
+        utils.print_latency_stats(total, 'E2E', True, bname=bname, args=args, csv_filename="benchmark_lat.csv", num_clients=num_requests)
     if len(scheduler) > 0:
-        utils.print_latency_stats(scheduler, 'SCHEDULER', True, bname=bname, args=args, csv_filename="benchmark_lat.csv")
+        utils.print_latency_stats(scheduler, 'SCHEDULER', True, bname=bname, args=args, csv_filename="benchmark_lat.csv", num_clients=num_requests)
     if len(kvs) > 0:
-        utils.print_latency_stats(kvs, 'KVS', True, bname=bname, args=args, csv_filename="benchmark_lat.csv")
+        utils.print_latency_stats(kvs, 'KVS', True, bname=bname, args=args, csv_filename="benchmark_lat.csv", num_clients=num_requests)
     logging.info('Number of KVS get retries: %d' % (retries))
 
 
