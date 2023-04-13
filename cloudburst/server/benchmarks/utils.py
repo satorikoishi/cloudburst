@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+from copy import deepcopy
 import logging
 
 import numpy as np
@@ -52,7 +53,7 @@ class Profiler():
     def print_tput(self, csv_filename=None):
         duration = time.time() - self.clock
         epoch_tput = (float)(self.tput) / duration
-        epoch_lat = self.epoch_lat
+        epoch_lat = deepcopy(self.epoch_lat)
         output = f"""EPOCH {self.epoch}, THROUGHPUT: {epoch_tput} /s, DURATION: {duration} s"""
         print(output)
         logging.info(output)
