@@ -129,7 +129,7 @@ def print_scheduler_stats(data, unit='ms', log=False, msg=None):
         assert(type(v) == list)
         if len(v) == 0:
             continue
-         # Amplify according to unit
+        # Amplify according to unit
         npv = [x * unit_dict[unit] for x in v]
         npdata = np.array(npv)
         mean = np.mean(npdata)

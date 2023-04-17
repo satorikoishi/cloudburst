@@ -177,6 +177,8 @@ def shredder_setup_data(cloudburst_client):
 # For testing Tput
 def client_recv_dag_response(cloudburst_client, stop_event, meta_dict, q, profiler):
     while True:
+        if stop_event.is_set() and q.full():
+            break
         res = cloudburst_client.async_recv_dag_response()
         if res == None:
             continue
@@ -184,9 +186,6 @@ def client_recv_dag_response(cloudburst_client, stop_event, meta_dict, q, profil
         lat = meta_dict[c_id].get_latency()
         q.put(c_id)    
         profiler.commit(lat) 
-        
-        if stop_event.is_set() and q.full():
-            break
 
 def log_throughput_to_csv(epoch, thruput, bname, num_clients, args, duration, csv_filename):
     args = ":".join(args) if args else None

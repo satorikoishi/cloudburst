@@ -96,6 +96,20 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
     # Tracks the process time in scheduler for each DAG.
     dag_process_times = {}
 
+    # Internal metadata to track thread utilization.
+    event_occupancy = {'connect': 0.0,
+                    'func_create': 0.0,
+                    'func_call': 0.0,
+                    'dag_create': 0.0,
+                    'dag_call': 0.0,
+                    'dag_delete': 0.0,
+                    'list': 0.0,
+                    'exec_status': 0.0,
+                    'sched_update': 0.0,
+                    'continuation': 0.0,
+                    }
+    total_occupancy = 0.0
+
     connect_socket = context.socket(zmq.REP)
     connect_socket.bind(sutils.BIND_ADDR_TEMPLATE % (CONNECT_PORT))
 
@@ -168,24 +182,48 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
         socks = dict(poller.poll(timeout=1000))
 
         if connect_socket in socks and socks[connect_socket] == zmq.POLLIN:
+            work_start = time.time()
+
             msg = connect_socket.recv_string()
             print("Received CONNECT request: %s" % msg)
             connect_socket.send_string(f'{route_addr}#{json.dumps(user_states)}')
+            
+            elapsed = time.time() - work_start
+            event_occupancy['connect'] += elapsed
+            total_occupancy += elapsed
 
         if (func_create_socket in socks and
                 socks[func_create_socket] == zmq.POLLIN):
+            work_start = time.time()
+            
             create_function(func_create_socket, kvs)
 
+            elapsed = time.time() - work_start
+            event_occupancy['func_create'] += elapsed
+            total_occupancy += elapsed
+
         if func_call_socket in socks and socks[func_call_socket] == zmq.POLLIN:
+            work_start = time.time()
+
             call_function(func_call_socket, pusher_cache, policy)
+
+            elapsed = time.time() - work_start
+            event_occupancy['func_call'] += elapsed
+            total_occupancy += elapsed
 
         if (dag_create_socket in socks and socks[dag_create_socket]
                 == zmq.POLLIN):
+            work_start = time.time()
+
             create_dag(dag_create_socket, pusher_cache, kvs, dags, policy,
                        call_frequency)
+            
+            elapsed = time.time() - work_start
+            event_occupancy['dag_create'] += elapsed
+            total_occupancy += elapsed
 
         if dag_call_socket in socks and socks[dag_call_socket] == zmq.POLLIN:
-            dag_start = time.time()
+            work_start = time.time()
             call = DagCall()
             call.ParseFromString(dag_call_socket.recv())
 
@@ -215,15 +253,27 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
             response = call_dag(call, pusher_cache, dags, policy)
             dag_call_socket.send(response.SerializeToString())
 
+            elapsed = time.time() - work_start
+            event_occupancy['dag_call'] += elapsed
+            total_occupancy += elapsed
+
             if name not in dag_process_times:
                 dag_process_times[name] = []
-            dag_process_times[name].append(time.time() - dag_start)
+            dag_process_times[name].append(elapsed)
 
         if (dag_delete_socket in socks and socks[dag_delete_socket] ==
                 zmq.POLLIN):
+            work_start = time.time()
+
             delete_dag(dag_delete_socket, dags, policy, call_frequency)
 
+            elapsed = time.time() - work_start
+            event_occupancy['dag_delete'] += elapsed
+            total_occupancy += elapsed
+
         if list_socket in socks and socks[list_socket] == zmq.POLLIN:
+            work_start = time.time()
+
             msg = list_socket.recv_string()
             prefix = msg if msg else ''
 
@@ -232,15 +282,27 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
 
             list_socket.send(resp.SerializeToString())
 
+            elapsed = time.time() - work_start
+            event_occupancy['list'] += elapsed
+            total_occupancy += elapsed
+
         if exec_status_socket in socks and socks[exec_status_socket] == \
                 zmq.POLLIN:
+            work_start = time.time()
+
             status = ThreadStatus()
             status.ParseFromString(exec_status_socket.recv())
 
             policy.process_status(status)
 
+            elapsed = time.time() - work_start
+            event_occupancy['exec_status'] += elapsed
+            total_occupancy += elapsed
+
         if sched_update_socket in socks and socks[sched_update_socket] == \
                 zmq.POLLIN:
+            work_start = time.time()
+
             status = SchedulerStatus()
             status.ParseFromString(sched_update_socket.recv())
 
@@ -262,8 +324,14 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
 
             policy.update_function_locations(status.function_locations)
 
+            elapsed = time.time() - work_start
+            event_occupancy['sched_update'] += elapsed
+            total_occupancy += elapsed
+
         if continuation_socket in socks and socks[continuation_socket] == \
                 zmq.POLLIN:
+            work_start = time.time()
+
             continuation = Continuation()
             continuation.ParseFromString(continuation_socket.recv())
 
@@ -281,6 +349,10 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
 
             for fname in dag.functions:
                 call_frequency[fname.name] += 1
+
+            elapsed = time.time() - work_start
+            event_occupancy['continuation'] += elapsed
+            total_occupancy += elapsed
 
         end = time.time()
 
@@ -348,6 +420,17 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
                 sckt = pusher_cache.get(sutils.get_statistics_report_address
                                         (mgmt_ip))
                 sckt.send(stats.SerializeToString())
+
+            utilization = total_occupancy / (end - start)
+
+            logging.info('Total thread occupancy: %.6f' % (utilization))
+
+            for event in event_occupancy:
+                occ = event_occupancy[event] / (end - start)
+                logging.info('\tEvent %s occupancy: %.6f' % (event, occ))
+                event_occupancy[event] = 0.0
+
+            total_occupancy = 0.0
 
             start = time.time()
 
