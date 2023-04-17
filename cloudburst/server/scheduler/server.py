@@ -93,6 +93,9 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
     # propagate metadata to them.
     schedulers = set()
 
+    # Tracks the process time in scheduler for each DAG.
+    dag_process_times = {}
+
     connect_socket = context.socket(zmq.REP)
     connect_socket.bind(sutils.BIND_ADDR_TEMPLATE % (CONNECT_PORT))
 
@@ -182,6 +185,7 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
                        call_frequency)
 
         if dag_call_socket in socks and socks[dag_call_socket] == zmq.POLLIN:
+            dag_start = time.time()
             call = DagCall()
             call.ParseFromString(dag_call_socket.recv())
 
@@ -210,6 +214,10 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
 
             response = call_dag(call, pusher_cache, dags, policy)
             dag_call_socket.send(response.SerializeToString())
+
+            if name not in dag_process_times:
+                dag_process_times[name] = []
+            dag_process_times[name].append(time.time() - dag_start)
 
         if (dag_delete_socket in socks and socks[dag_delete_socket] ==
                 zmq.POLLIN):
@@ -319,6 +327,9 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
 
                 call_frequency[fname] = 0
 
+            sched_utils.print_scheduler_stats(interarrivals, log=True, msg='Scheduler DAG interarrival stats:')
+            sched_utils.print_scheduler_stats(dag_process_times, log=True, msg='Scheduler DAG process time stats:')
+
             for dname in interarrivals:
                 dstats = stats.dags.add()
                 dstats.name = dname
@@ -326,6 +337,9 @@ def scheduler(ip, mgmt_ip, user_states, route_addr, policy_type):
                 dstats.interarrival.extend(interarrivals[dname])
 
                 interarrivals[dname].clear()
+
+            for dname in dag_process_times:
+                dag_process_times[dname].clear()
 
             # We only attempt to send the statistics if we are running in
             # cluster mode. If we are running in local mode, we write them to

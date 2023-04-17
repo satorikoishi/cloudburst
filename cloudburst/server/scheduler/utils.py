@@ -12,6 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import logging
+import numpy as np
 import zmq
 
 from anna.lattices import SetLattice
@@ -26,6 +28,7 @@ NUM_EXEC_THREADS = 3
 EXECUTORS_PORT = 7002
 SCHEDULERS_PORT = 7004
 
+unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
 def get_func_list(client, prefix, fullname=False):
     funcs = client.get(FUNCOBJ)[FUNCOBJ]
@@ -114,3 +117,45 @@ def find_dag_source(dag):
         funcs.remove(sink)
 
     return funcs
+
+def print_scheduler_stats(data, unit='ms', log=False, msg=None):
+    if msg:
+        if log:
+            logging.info(msg)
+        else:
+            print(msg)
+
+    for k, v in data.items():
+        assert(type(v) == list)
+        if len(v) == 0:
+            continue
+         # Amplify according to unit
+        npv = [x * unit_dict[unit] for x in v]
+        npdata = np.array(npv)
+        mean = np.mean(npdata)
+        median = np.percentile(npdata, 50)
+        p75 = np.percentile(npdata, 75)
+        p95 = np.percentile(npdata, 95)
+        p99 = np.percentile(npdata, 99)
+        mx = np.max(npdata)
+
+        p25 = np.percentile(npdata, 25)
+        p05 = np.percentile(npdata, 5)
+        p01 = np.percentile(npdata, 1)
+        mn = np.min(npdata)
+
+        output = ('DAG %s:\n\tsample size: %d\n' +
+              '\tTime unit: %s\n'
+              '\tmean: %.3f, median: %.3f\n' +
+              '\tmin/max: (%.3f, %.3f)\n' +
+              '\tp25/p75: (%.3f, %.3f)\n' +
+              '\tp5/p95: (%.3f, %.3f)\n' +
+              '\tp1/p99: (%.3f, %.3f)') % (k, len(npdata), unit, mean,
+                                           median, mn, mx, p25, p75, p05, p95,
+                                           p01, p99)
+        
+        if log:
+            logging.info(output)
+        else:
+            print(output)
+
