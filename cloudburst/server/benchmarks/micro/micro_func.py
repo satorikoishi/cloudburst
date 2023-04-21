@@ -32,9 +32,13 @@ def run(cloudburst_client, num_requests, sckt, args):
         print(f"{args} too short. Args at least 2: client_name, dag_name, v_size")
         sys.exit(1)
     
-    if len(args) == 4:
-        assert(args[3] == "tput")
-        return run_tput_example(cloudburst_client, num_requests, sckt, args)
+    single_key = False
+    if len(args) >= 4:
+        if args[-1] == 'tput':
+            return run_tput_example(cloudburst_client, num_requests, sckt, args)
+        else:
+            key = int(args[3])
+            single_key = True
 
     client_name = args[0]
     dag_name = args[1]
@@ -58,8 +62,9 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_total = []
 
     for i in range(num_requests):
-        # TODO: generate ref for different workloads
-        key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
+        if not single_key:
+            # TODO: generate ref for different workloads
+            key = meta.key_gen(v_size, random.randrange(meta.NUM_KV_PAIRS))
         
         # DAG name = Function name
         arg_map = {dag_name: [key, client_name]}

@@ -123,9 +123,13 @@ def run(cloudburst_client, num_requests, sckt, args):
         create_dag(cloudburst_client)
         return [], [], [], 0
     
-    if len(args) == 3:
-        assert(args[2] == "tput")
-        return run_tput_example(cloudburst_client, num_requests, sckt, args)
+    single_key = False
+    if len(args) >= 3:
+        if args[-1] == 'tput':
+            return run_tput_example(cloudburst_client, num_requests, sckt, args)
+        else:
+            nodeid = int(args[2])
+            single_key = True
     
     client_name = args[0]
     depth = int(args[1])
@@ -148,7 +152,8 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_total = []
 
     for i in range(num_requests):
-        nodeid = random.choice(nodeid_list)
+        if not single_key:
+            nodeid = random.choice(nodeid_list)
         # DAG name = Function name
         arg_map = {dag_name: [nodeid, depth, client_name]}
         
