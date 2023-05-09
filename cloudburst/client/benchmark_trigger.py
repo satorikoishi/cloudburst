@@ -65,6 +65,9 @@ epoch = 1
 epoch_thruput = 0
 epoch_start = time.time()
 
+total_tput = 0.0
+total_elapsed = 0.0
+
 _, bname, num_clients, *args = msg.split(':')
 num_clients = int(num_clients)
 
@@ -86,10 +89,14 @@ while end_recv < sent_msgs:
         total += new_tot
         epoch_recv += 1
 
+
         if epoch_recv == sent_msgs:
             epoch_end = time.time()
             elapsed = epoch_end - epoch_start
             thruput = epoch_thruput / elapsed
+
+            total_tput += epoch_thruput
+            total_elapsed += elapsed
 
             logging.info('\n\n*** EPOCH %d ***' % (epoch))
             logging.info('\tTHROUGHPUT: %.2f' % (thruput))
@@ -107,3 +114,4 @@ logging.info('*** END ***')
 
 if len(total) > 0:
     utils.print_latency_stats(total, 'E2E', True, num_clients=num_clients)
+    utils.log_throughput_to_csv('TOTAL', total_tput/total_elapsed, bname=bname, num_clients=num_clients, args=args, duration=elapsed, csv_filename='throughput.csv')
