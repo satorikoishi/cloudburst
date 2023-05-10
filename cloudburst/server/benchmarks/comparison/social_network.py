@@ -21,6 +21,10 @@ UPPER_BOUND = 100000
 
 HOT_RATIO = 0.00001
 
+# for test purpose: make sure the payload size is the same as in the anna version
+SHREDDER_TEST_KEY = '1000002'
+TEST_SHREDDER_LATTICE = True
+
 def gen_userid(id):
     return f'{id}'
 
@@ -42,6 +46,8 @@ def generate_dataset(cloudburst_client, client_name):
             list_slice = list(range(cur+1, UPPER_BOUND))+list(range(0, next%UPPER_BOUND+1))
         
         cloudburst_client.put_object(gen_userid(cur), list_slice, client_name=client_name)
+
+        cloudburst_client.put_object(SHREDDER_TEST_KEY, list(range(0, 10)), client_name="shredder") # for test purpose
             
     logging.info('Finished generating dataset')
 
@@ -143,6 +149,10 @@ def run(cloudburst_client, num_requests, sckt, args):
                 userid = random.choice(userid_list)
             else:
                 userid = random.choice(hot_userid_list)
+
+            if TEST_SHREDDER_LATTICE and read_single_client_name == "shredder":
+                userid = SHREDDER_TEST_KEY  # for test purpose
+
             arg_map = {dag_name: [userid, read_single_client_name]}
         request_count += 1
         
@@ -199,6 +209,10 @@ def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
                 userid = random.choice(userid_list)
             else:
                 userid = random.choice(hot_userid_list)
+            
+            if TEST_SHREDDER_LATTICE and read_single_client_name == "shredder":
+                userid = SHREDDER_TEST_KEY  # for test purpose
+
             arg_map = {dag_name: [userid, read_single_client_name]}
         request_count += 1
         
