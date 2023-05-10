@@ -45,9 +45,9 @@ def generate_dataset(cloudburst_client, client_name):
             # last slice
             list_slice = list(range(cur+1, UPPER_BOUND))+list(range(0, next%UPPER_BOUND+1))
         
-        cloudburst_client.put_object(gen_userid(cur), list_slice, client_name=client_name)
+        cloudburst_client.put_object(gen_userid(cur), np.array(list_slice), client_name=client_name)
 
-        cloudburst_client.put_object(SHREDDER_TEST_KEY, list(range(0, 10)), client_name="shredder") # for test purpose
+        cloudburst_client.put_object(SHREDDER_TEST_KEY, np.array(list(range(0, 10))), client_name="shredder") # for test purpose
             
     logging.info('Finished generating dataset')
 
@@ -69,7 +69,7 @@ def create_dag(cloudburst_client):
             sum = cloudburst.execute_js_fun(rpc_fun_name, id, k, client_name=client_name)
             return sum
         
-        friends = cloudburst.get(gen_userid(id))
+        friends = cloudburst.get(gen_userid(id)).tolist()
         sum = len(friends)
         
         if k == 1:
