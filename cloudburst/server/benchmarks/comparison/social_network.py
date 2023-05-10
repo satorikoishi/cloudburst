@@ -72,7 +72,7 @@ def create_dag(cloudburst_client):
         friends = cloudburst.get(gen_userid(id))
         sum = len(friends)
         
-        if k == 0:
+        if k == 1:
             return sum
         
         for friend_id in friends:
