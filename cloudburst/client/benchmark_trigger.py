@@ -69,7 +69,7 @@ total_tput = 0.0
 total_elapsed = 0.0
 
 _, bname, num_clients, *args = msg.split(':')
-num_clients = int(num_clients)
+num_clients = int(num_clients) * NUM_THREADS
 
 while end_recv < sent_msgs:
     msg = recv_socket.recv()
