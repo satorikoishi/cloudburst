@@ -104,6 +104,13 @@ def run(cloudburst_client, num_requests, sckt, args):
     client_name = args[0]
     k = int(args[1])
 
+    if client_name == "hybrid":
+        k_hop_client_name = "shredder"
+        read_single_client_name = "anna"
+    else:
+        k_hop_client_name = client_name
+        read_single_client_name = client_name
+
     userid_list = cloudburst_client.get_object(key_args())
     hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*0.01)) # 1% of users are hot
     
@@ -127,14 +134,14 @@ def run(cloudburst_client, num_requests, sckt, args):
         if request_count == 0:
             dag_name = k_hop_dag_name
             userid = random.choice(userid_list)
-            arg_map = {dag_name: [userid, k, client_name]}
+            arg_map = {dag_name: [userid, k, k_hop_client_name]}
         else:
             dag_name = read_single_dag_name
             if random.random() < 0.05: # 95% of reads are hot
                 userid = random.choice(userid_list)
             else:
                 userid = random.choice(hot_userid_list)
-            arg_map = {dag_name: [userid, client_name]}
+            arg_map = {dag_name: [userid, read_single_client_name]}
         request_count += 1
         
         start = time.time()
@@ -167,7 +174,13 @@ def run(cloudburst_client, num_requests, sckt, args):
 
 def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
     userid_list, hot_userid_list, k, client_name = args
-    logging.info(f'dag_name: {read_single_dag_name} and {k_hop_dag_name}, k: {k}')
+    if client_name == "hybrid":
+        k_hop_client_name = "shredder"
+        read_single_client_name = "anna"
+    else:
+        k_hop_client_name = client_name
+        read_single_client_name = client_name
+    logging.info(f'dag_name: {read_single_dag_name} and {k_hop_dag_name}, k: {k}, client_name: {client_name}')
     request_count = 0
     while True:
         if stop_event.is_set():
@@ -177,14 +190,14 @@ def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
         if request_count == 0:
             dag_name = k_hop_dag_name
             userid = random.choice(userid_list)
-            arg_map = {dag_name: [userid, k, client_name]}
+            arg_map = {dag_name: [userid, k, k_hop_client_name]}
         else:
             dag_name = read_single_dag_name
             if random.random() < 0.05: # 95% of reads are hot
                 userid = random.choice(userid_list)
             else:
                 userid = random.choice(hot_userid_list)
-            arg_map = {dag_name: [userid, client_name]}
+            arg_map = {dag_name: [userid, read_single_client_name]}
         request_count += 1
         
         meta_dict[c_id].reset()
