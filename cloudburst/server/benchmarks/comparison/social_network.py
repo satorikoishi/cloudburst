@@ -19,36 +19,6 @@ rpc_fun_name = 'count_friend_list'
 # 10000 lists, out of 100000 numbers
 UPPER_BOUND = 100000
 
-# def gen_nodeid(id):
-#     return f'{dag_name}{id}'
-
-# def key_args():
-#     return f'{dag_name}_args'
-
-# def generate_dataset(cloudburst_client):    
-#     splitter = np.sort(np.random.choice(np.arange(1, UPPER_BOUND, dtype=int), 999, replace=False)).tolist()
-#     splitter = [0] + splitter
-#     cloudburst_client.put_object(key_args(), splitter)
-#     splitter = splitter + [0]
-    
-#     for offset in range(1000):
-#         cur = splitter[offset]
-#         next = splitter[offset + 1]
-        
-#         if next != 0:
-#             # normal case
-#             list_slice = list(range(cur, next))
-#         else:
-#             # last slice
-#             list_slice = list(range(cur, UPPER_BOUND + 1))
-        
-#         # First element points to next list
-#         list_slice[0] = next
-        
-#         cloudburst_client.put_object(gen_nodeid(cur), list_slice)
-            
-#     logging.info('Finished generating dataset')
-
 def gen_userid(id):
     return f'{id}'
 
@@ -56,23 +26,18 @@ def key_args():
     return '1000001'
 
 def generate_dataset(cloudburst_client, client_name):    
-    splitter = np.arange(0, UPPER_BOUND, 10).tolist()
+    splitter = np.arange(0, UPPER_BOUND).tolist()
     cloudburst_client.put_object(key_args(), splitter, client_name=client_name)
-    splitter = splitter + [0]
     
-    for offset in range(UPPER_BOUND // 10):
-        cur = splitter[offset]
-        next = splitter[offset + 1]
+    for cur in splitter:
+        next = cur + 10
         
-        if next != 0:
+        if next < UPPER_BOUND:
             # normal case
-            list_slice = list(range(cur, next))
+            list_slice = list(range(cur+1, next+1))
         else:
             # last slice
-            list_slice = list(range(cur, UPPER_BOUND))
-        
-        # First element points to next list
-        list_slice[0] = next
+            list_slice = list(range(cur+1, UPPER_BOUND))+list(range(0, next%UPPER_BOUND+1))
         
         cloudburst_client.put_object(gen_userid(cur), list_slice, client_name=client_name)
             
