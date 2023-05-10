@@ -19,6 +19,8 @@ rpc_fun_name = 'count_friend_list'
 # 10000 lists, out of 100000 numbers
 UPPER_BOUND = 100000
 
+HOT_RATIO = 0.00001
+
 def gen_userid(id):
     return f'{id}'
 
@@ -112,7 +114,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         read_single_client_name = client_name
 
     userid_list = cloudburst_client.get_object(key_args())
-    hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*0.01)) # 1% of users are hot
+    hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*HOT_RATIO))
     
     logging.info(f'Running social network, kvs_name {client_name}, k {k}')
 
@@ -219,7 +221,7 @@ def run_tput_example(cloudburst_client, num_clients, sckt, args):
     k = int(args[1])
 
     userid_list = cloudburst_client.get_object(key_args())
-    hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*0.01)) # 1% of users are hot
+    hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*HOT_RATIO))
     
     logging.info(f'Running social network, kvs_name {client_name}, k {k}')
     client_meta_dict = {}
