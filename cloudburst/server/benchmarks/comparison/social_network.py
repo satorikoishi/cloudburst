@@ -162,7 +162,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         s_time = end - start
         
         start = time.time()
-        res.get()
+        r = res.get()
         end = time.time()
         k_time = end - start
         
@@ -170,6 +170,8 @@ def run(cloudburst_client, num_requests, sckt, args):
         kvs_time += [k_time]
         epoch_total += [s_time + k_time]
         total_time += [s_time + k_time]
+
+        print(f"request {i} done, res {r}")
 
         log_end = time.time()
         if (log_end - log_start) > 10:
