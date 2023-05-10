@@ -46,7 +46,7 @@ def generate_dataset(cloudburst_client, client_name):
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
     def read_single(cloudburst, key, client_name=DEFAULT_CLIENT_NAME):
-        arr = cloudburst.get(key, client_name=client_name)
+        arr = cloudburst.get(key, client_name=client_name, raw=True)
         return arr
 
     cloud_read_single = cloudburst_client.register(read_single, read_single_dag_name)

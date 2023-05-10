@@ -8,10 +8,10 @@ serializer = Serializer()
 
 class AbstractKvsClient():
     
-    def get(self, key):
+    def get(self, key, raw=False):
         raise NotImplementedError
 
-    def get_list(self, keys):
+    def get_list(self, keys, raw=False):
         raise NotImplementedError
 
     def put(self, key, val):
@@ -26,12 +26,12 @@ class AnnaKvsClient(AbstractKvsClient):
             self.client = anna_client
         else: self.client = AnnaTcpClient(kvs_addr, ip, local=local, offset=offset)
 
-    def get(self, key):
+    def get(self, key, raw=False):
         if not isinstance(key, str):
             key = str(key)
         return self.client.get(key)[key]
 
-    def get_list(self, keys):
+    def get_list(self, keys, raw=False):
         keys = [str(key) for key in keys]
         return self.client.get(keys)
 
@@ -51,12 +51,12 @@ class AnnaIpcKvsClient(AbstractKvsClient):
     def __init__(self, thread_id, context):
         self.client = AnnaIpcClient(thread_id, context)
 
-    def get(self, key):
+    def get(self, key, raw=False):
         if not isinstance(key, str):
             key = str(key)
         return self.client.get(key)[key]
 
-    def get_list(self, keys):
+    def get_list(self, keys, raw=False):
         keys = [str(key) for key in keys]
         return self.client.get(keys)
 
@@ -79,11 +79,11 @@ class RedisKvsClient(AbstractKvsClient):
     def __init__(self, host, port, db):
         self.client = Redis(host=host, port=port, db=db)
 
-    def get(self, key):
+    def get(self, key, raw=False):
         result = self.client.get(key)
         return serializer.load(result) if result is not None else None
 
-    def get_list(self, keys):
+    def get_list(self, keys, raw=False):
         deserialized_vals = map(serializer.load, self.client.mget(keys))
         return dict(zip(keys, deserialized_vals)) # return kv pairs
 
@@ -103,13 +103,15 @@ class ShredderKvsClient(AbstractKvsClient):
     def __init__(self, host, port, db):
         self.client = Redis(host=host, port=port, db=db)
 
-    def get(self, key):
+    def get(self, key, raw=False):
         result = self.client.get(key)
+        if raw:
+            return result
         return serializer.load(result) if result is not None else None
 
     # Shredder does not support `mget` operation temporarily
-    def get_list(self, keys):
-        values = map(self.get, keys)
+    def get_list(self, keys, raw=False):
+        values = map(self.get, keys, [raw] * len(keys))
         return dict(zip(keys, values))
 
     def put(self, key, val):
@@ -149,11 +151,11 @@ class KvsClient():
             raise ValueError(f"Invalid client name: {client_name}")
         return kvs
 
-    def get(self, key, client_name=DEFAULT_CLIENT_NAME):
-        return self.get_client(client_name).get(key)
+    def get(self, key, client_name=DEFAULT_CLIENT_NAME, raw=False):
+        return self.get_client(client_name).get(key, raw)
 
-    def get_list(self, keys, client_name=DEFAULT_CLIENT_NAME):
-        return self.get_client(client_name).get_list(keys)
+    def get_list(self, keys, client_name=DEFAULT_CLIENT_NAME, raw=False):
+        return self.get_client(client_name).get_list(keys, raw)
     
     def put(self, key, val, client_name=DEFAULT_CLIENT_NAME):
         return self.get_client(client_name).put(key, val)

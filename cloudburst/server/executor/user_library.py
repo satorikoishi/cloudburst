@@ -149,10 +149,14 @@ class KvsUserLibrary(AbstractCloudburstUserLibrary):
     def put(self, ref, value, client_name=DEFAULT_CLIENT_NAME):
         return self.client.put(ref, serializer.dump_lattice(value), client_name)
 
-    def get(self, ref, deserialize=True, client_name=DEFAULT_CLIENT_NAME):
+    def get(self, ref, deserialize=True, client_name=DEFAULT_CLIENT_NAME, raw=False):
         refs = ref if type(ref) == list else [ref]
         refs = [str(item) if type(item) != str else item for item in refs]
-        kv_pairs = self.client.get_list(refs, client_name)
+        kv_pairs = self.client.get_list(refs, client_name, raw=raw)
+
+        if raw:
+            return kv_pairs
+
         result = {}
 
         # Deserialize each of the lattice objects and return them to the
