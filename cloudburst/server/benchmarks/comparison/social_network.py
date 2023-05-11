@@ -19,7 +19,7 @@ rpc_fun_name = 'count_friend_list'
 # 10000 lists, out of 100000 numbers
 UPPER_BOUND = 100000
 
-HOT_RATIO = 0.00001
+HOT_RATIO = 0.0001
 
 # for test purpose: make sure the payload size is the same as in the anna version
 SHREDDER_TEST_KEY = '1000002'
@@ -171,7 +171,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         epoch_total += [s_time + k_time]
         total_time += [s_time + k_time]
 
-        print(f"request {i} done, res {r}")
+        # print(f"request {i} done, res {r}")
 
         log_end = time.time()
         if (log_end - log_start) > 10:
