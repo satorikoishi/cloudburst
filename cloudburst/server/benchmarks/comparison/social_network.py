@@ -134,6 +134,7 @@ def run(cloudburst_client, num_requests, sckt, args):
 
     log_epoch = 0
     epoch_total = []
+    epoch_req_num = 0
 
     request_count = 0
 
@@ -171,15 +172,18 @@ def run(cloudburst_client, num_requests, sckt, args):
         epoch_total += [s_time + k_time]
         total_time += [s_time + k_time]
 
+        epoch_req_num += 1
+
         # print(f"request {i} done, res {r}")
 
         log_end = time.time()
         if (log_end - log_start) > 10:
             if sckt:
-                sckt.send(cp.dumps(epoch_total))
+                sckt.send(cp.dumps((epoch_req_num, epoch_total)))
             utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
                                         (log_epoch), True, bname='social_network', args=args, csv_filename='benchmark_lat.csv')
 
+            epoch_req_num = 0
             epoch_total.clear()
             log_epoch += 1
             log_start = time.time()
