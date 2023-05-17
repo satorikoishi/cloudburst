@@ -137,6 +137,8 @@ def run(cloudburst_client, num_requests, sckt, args):
             utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
                                         (epoch), True, bname='k_hop', args=args, csv_filename='benchmark_lat.csv')
 
+            epoch += 1
+            
             epoch_req_count = 0
             epoch_latencies.clear()
             epoch_start = time.time()
