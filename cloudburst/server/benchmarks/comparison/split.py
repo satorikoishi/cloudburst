@@ -37,10 +37,10 @@ def create_dag(cloudburst_client):
             res = cloudburst.execute_js_fun(rpc_fun_name, k, client_name=client_name)
             return res
         
-        arr = cloudburst.get_object(k, client_name=client_name)
+        arr = cloudburst.get(k, client_name=client_name)
         split_arr = np.array_split(arr, K)
         for (i, a) in enumerate(split_arr):
-            cloudburst.put_object(splited_key_gen(k, i), a, client_name=client_name)
+            cloudburst.put(splited_key_gen(k, i), a, client_name=client_name)
 
         return 0
 
