@@ -62,7 +62,7 @@ def create_dag(cloudburst_client):
         sys.exit(1)
     
     ''' REGISTER DAG '''
-    utils.register_dag_for_single_func(cloudburst_client, "read_single")
+    utils.register_dag_for_single_func(cloudburst_client, dag_name)
     logging.info('Finished registering dag')
     
 

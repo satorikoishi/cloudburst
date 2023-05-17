@@ -139,7 +139,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     request_count = 0
 
     for i in range(num_requests):
-        request_count %= 20 # 1 read_single, 19 k_hop
+        request_count %= 20 # 1 k_hop, 19 read_single
         if request_count == 0:
             dag_name = k_hop_dag_name
             userid = random.choice(userid_list)

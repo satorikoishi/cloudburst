@@ -8,35 +8,67 @@ import numpy as np
 
 from cloudburst.server.benchmarks import utils
 from cloudburst.shared.reference import CloudburstReference
+from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 # Args: k
 dag_name = 'k_hop'
+rpc_fun_name = 'count_friend_list'
 
-def gen_userid(id):
-    return f'{dag_name}{id}'
+UPPER_BOUND = 100000
+
+# def gen_userid(id):
+#     return f'{dag_name}{id}'
 
 # TODO: use real-world dataset
-def generate_dataset(cloudburst_client):
-    # 1000 users, randomly follow 0 - 100 users
-    all_users = np.arange(1000)
+# def generate_dataset(cloudburst_client):
+#     # 1000 users, randomly follow 0 - 100 users
+#     all_users = np.arange(1000)
     
-    for i in range(1000):
-        follow_count = random.randrange(1, 100)
-        userid = gen_userid(i)
-        follow_arr = np.random.choice(all_users, follow_count, replace=False)
-        cloudburst_client.put_object(userid, follow_arr)
+#     for i in range(1000):
+#         follow_count = random.randrange(1, 100)
+#         userid = gen_userid(i)
+#         follow_arr = np.random.choice(all_users, follow_count, replace=False)
+#         cloudburst_client.put_object(userid, follow_arr)
         
-        # print(f'User {userid} following {follow_count} users, they are: {follow_arr}')
+#         # print(f'User {userid} following {follow_count} users, they are: {follow_arr}')
     
+#     logging.info('Finished generating dataset')
+
+def gen_userid(id):
+    return f'{id}'
+
+def key_args():
+    return '1000001'
+
+def generate_dataset(cloudburst_client, client_name):    
+    splitter = np.arange(0, UPPER_BOUND).tolist()
+    cloudburst_client.put_object(key_args(), splitter, client_name=client_name)
+    
+    for cur in splitter:
+        next = cur + 10
+        
+        if next < UPPER_BOUND:
+            # normal case
+            list_slice = list(range(cur+1, next+1))
+        else:
+            # last slice
+            list_slice = list(range(cur+1, UPPER_BOUND))+list(range(0, next%UPPER_BOUND+1))
+        
+        cloudburst_client.put_object(gen_userid(cur), np.array(list_slice), client_name=client_name)
+            
     logging.info('Finished generating dataset')
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
-    def k_hop(cloudburst, id, k):
-        friends = cloudburst.get(gen_userid(id))
+    def k_hop(cloudburst, id, k, client_name=DEFAULT_CLIENT_NAME):
+        if client_name == "shredder":
+            sum = cloudburst.execute_js_fun(rpc_fun_name, id, k, client_name=client_name)
+            return sum
+        
+        friends = cloudburst.get(gen_userid(id)).tolist()
         sum = len(friends)
         
-        if k == 0:
+        if k == 1:
             return sum
         
         for friend_id in friends:
@@ -58,60 +90,55 @@ def create_dag(cloudburst_client):
     
 
 def run(cloudburst_client, num_requests, sckt, args):
-    if len(args) < 1:
-        print(f"{args} too short. Args: k")
+    if len(args) < 2 and args[0] != 'create':
+        print(f"{args} too short. Args: kvs_name, k")
         sys.exit(1)
-    
-    if args[0] == 'c':
+
+    if args[0] == 'create':
         # Create dataset and DAG
-        generate_dataset(cloudburst_client)
+        generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
+        utils.shredder_setup_data(cloudburst_client)
         create_dag(cloudburst_client)
         return [], [], [], 0
     
-    k = int(args[0])
+    client_name = args[0]
+    k = int(args[1])
+
+    userid_list = cloudburst_client.get_object(key_args())
     
-    logging.info(f'Running k-hop with k: {k}')
+    logging.info(f'Running k-hop , kvs_name {client_name}, k {k}')
 
     total_time = []
-    scheduler_time = []
-    kvs_time = []
+    epoch_req_count = 0
+    epoch_latencies = []
 
-    retries = 0
+    epoch_start = time.time()
+    epoch = 0
 
-    log_start = time.time()
-
-    log_epoch = 0
-    epoch_total = []
-
-    for i in range(num_requests):
-        id = random.randrange(1000)
-        # DAG name = Function name
-        arg_map = {dag_name: [id, k]}
+    for _ in range(num_requests):
+        
+        userid = random.choice(userid_list)
+        arg_map = {dag_name: [userid, k, client_name]}
         
         start = time.time()
-        res = cloudburst_client.call_dag(dag_name, arg_map)
+        res = cloudburst_client.call_dag(dag_name, arg_map, True)
         end = time.time()
-        s_time = end - start
-        
-        start = time.time()
-        res.get()
-        end = time.time()
-        k_time = end - start
-        
-        scheduler_time += [s_time]
-        kvs_time += [k_time]
-        epoch_total += [s_time + k_time]
-        total_time += [s_time + k_time]
 
-        log_end = time.time()
-        if (log_end - log_start) > 10:
+        if res is not None:
+            epoch_req_count += 1
+        
+        total_time += [end - start]
+        epoch_latencies += [end - start]
+
+        epoch_end = time.time()
+        if (epoch_end - epoch_start) > 10:
             if sckt:
-                sckt.send(cp.dumps(epoch_total))
-            utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
-                                        (log_epoch), True, bname='k_hop', args=args, csv_filename='benchmark.csv')
+                sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
+            utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
+                                        (epoch), True, bname='k_hop', args=args, csv_filename='benchmark_lat.csv')
 
-            epoch_total.clear()
-            log_epoch += 1
-            log_start = time.time()
+            epoch_req_count = 0
+            epoch_latencies.clear()
+            epoch_start = time.time()
 
-    return total_time, scheduler_time, kvs_time, retries
+    return total_time, [], [], 0
