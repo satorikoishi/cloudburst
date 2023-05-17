@@ -79,12 +79,10 @@ def run(cloudburst_client, num_requests, sckt, args):
         return [], [], [], 0
     
     client_name = args[0]
-    userid = int(args[1])
-
     userid_list = cloudburst_client.get_object(key_args())
     hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*HOT_RATIO))
     
-    logging.info(f'Running read array, kvs_name {client_name}, userid {userid}')
+    logging.info(f'Running read array, kvs_name {client_name}')
 
     total_time = []
     epoch_req_count = 0
