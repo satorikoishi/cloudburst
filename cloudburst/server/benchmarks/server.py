@@ -34,6 +34,7 @@ from cloudburst.server.benchmarks.micro import (
 from cloudburst.server.benchmarks.comparison import (
     k_hop,
     list_traversal,
+    read_array,
     social_network
 )
 import cloudburst.server.utils as sutils
@@ -106,6 +107,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'social_network':
         total, scheduler, kvs, retries = social_network.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'read_array':
+        total, scheduler, kvs, retries = read_array.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
