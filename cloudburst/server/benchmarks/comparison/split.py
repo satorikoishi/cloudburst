@@ -20,7 +20,7 @@ def key_gen():
     return f'{random.randrange(0, NUM_KEYS)}'
 
 def splited_key_gen(key, i):
-    return f'{key * NUM_KEYS + i}'
+    return f'{int(key) * NUM_KEYS + i}'
 
 def generate_dataset(cloudburst_client, client_name):    
     buf = np.random.bytes(10 * 1024 * 1024) # 10MB
