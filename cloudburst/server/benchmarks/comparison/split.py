@@ -57,8 +57,8 @@ def create_dag(cloudburst_client):
     
 
 def run(cloudburst_client, num_requests, sckt, args):
-    if len(args) < 2 and args[0] != 'create':
-        print(f"{args} too short. Args: kvs_name, k")
+    if len(args) < 1 and args[0] != 'create':
+        print(f"{args} too short. Args: kvs_name")
         sys.exit(1)
 
     if args[0] == 'create':
@@ -70,7 +70,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     
     client_name = args[0]
     
-    logging.info(f'Running k-hop , kvs_name {client_name}')
+    logging.info(f'Running split , kvs_name {client_name}')
 
     total_time = []
     epoch_req_count = 0
