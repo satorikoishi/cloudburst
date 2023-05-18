@@ -13,7 +13,7 @@ from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 dag_name = 'accumulate'
 rpc_fun_name = 'accumulate'
 
-KEY = '10001'
+KEY = '10000010'
 VALUE = 1
 REPEAT_NUM = 100
 
@@ -24,10 +24,6 @@ def generate_dataset(cloudburst_client, client_name):
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
     def accumulate(cloudburst, k, client_name=DEFAULT_CLIENT_NAME):
-        if client_name == "shredder":
-            res = cloudburst.execute_js_fun(rpc_fun_name, k, client_name=client_name)
-            return res
-        
         sum = 0
         
         for _ in range (REPEAT_NUM):
@@ -56,6 +52,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     if args[0] == 'create':
         # Create dataset and DAG
         generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
+        generate_dataset(cloudburst_client, 'shredder')
         utils.shredder_setup_data(cloudburst_client)
         create_dag(cloudburst_client)
         return [], [], [], 0
