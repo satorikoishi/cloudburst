@@ -32,6 +32,7 @@ from cloudburst.server.benchmarks.micro import (
     prepare
 )
 from cloudburst.server.benchmarks.comparison import (
+    accumulate,
     k_hop,
     list_traversal,
     read_array,
@@ -114,6 +115,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'split':
         total, scheduler, kvs, retries = split.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'accumulate':
+        total, scheduler, kvs, retries = accumulate.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
