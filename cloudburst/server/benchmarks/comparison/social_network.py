@@ -106,9 +106,6 @@ def run(cloudburst_client, num_requests, sckt, args):
         create_dag(cloudburst_client)
         return [], [], [], 0
     
-    if len(args) >= 3 and args[-1] == 'tput':
-        return run_tput_example(cloudburst_client, num_requests, sckt, args)
-    
     client_name = args[0]
     k = int(args[1])
 
@@ -125,19 +122,13 @@ def run(cloudburst_client, num_requests, sckt, args):
     logging.info(f'Running social network, kvs_name {client_name}, k {k}')
 
     total_time = []
-    scheduler_time = []
-    kvs_time = []
+    epoch_req_count = 0
+    epoch_latencies = []
 
-    retries = 0
-
-    log_start = time.time()
-
-    log_epoch = 0
-    epoch_total = []
-    epoch_req_num = 0
+    epoch_start = time.time()
+    epoch = 0
 
     request_count = 0
-
     for i in range(num_requests):
         request_count %= 20 # 1 k_hop, 19 read_single
         if request_count == 0:
@@ -158,116 +149,26 @@ def run(cloudburst_client, num_requests, sckt, args):
         request_count += 1
         
         start = time.time()
-        res = cloudburst_client.call_dag(dag_name, arg_map)
+        res = cloudburst_client.call_dag(dag_name, arg_map, True)
         end = time.time()
-        s_time = end - start
-        
-        start = time.time()
-        r = res.get()
-        end = time.time()
-        k_time = end - start
-        
-        scheduler_time += [s_time]
-        kvs_time += [k_time]
-        epoch_total += [s_time + k_time]
-        total_time += [s_time + k_time]
 
-        epoch_req_num += 1
+        if res is not None:
+            epoch_req_count += 1
 
-        # print(f"request {i} done, res {r}")
+        total_time += [end - start]
+        epoch_latencies += [end - start]
 
-        log_end = time.time()
-        if (log_end - log_start) > 10:
+        epoch_end = time.time()
+        if (epoch_end - epoch_start) > 10:
             if sckt:
-                sckt.send(cp.dumps((epoch_req_num, epoch_total)))
-            utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
-                                        (log_epoch), True, bname='social_network', args=args, csv_filename='benchmark_lat.csv')
+                sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
+            utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
+                                        (epoch), True, bname='social_network', args=args, csv_filename='benchmark_lat.csv')
+            epoch += 1
 
-            epoch_req_num = 0
-            epoch_total.clear()
-            log_epoch += 1
-            log_start = time.time()
+            epoch_req_count = 0
+            epoch_latencies.clear()
+            epoch_start = time.time()
 
-    return total_time, scheduler_time, kvs_time, retries
+    return total_time, [], [], 0
 
-def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
-    userid_list, hot_userid_list, k, client_name = args
-    if client_name == "hybrid":
-        k_hop_client_name = "shredder"
-        read_single_client_name = "anna"
-    else:
-        k_hop_client_name = client_name
-        read_single_client_name = client_name
-    logging.info(f'dag_name: {read_single_dag_name} and {k_hop_dag_name}, k: {k}, client_name: {client_name}')
-    request_count = 0
-    while True:
-        if stop_event.is_set():
-            break
-        c_id = q.get()
-        request_count %= 20 # 1 read_single, 19 k_hop
-        if request_count == 0:
-            dag_name = k_hop_dag_name
-            userid = random.choice(userid_list)
-            arg_map = {dag_name: [userid, k, k_hop_client_name]}
-        else:
-            dag_name = read_single_dag_name
-            if random.random() < 0.05: # 95% of reads are hot
-                userid = random.choice(userid_list)
-            else:
-                userid = random.choice(hot_userid_list)
-            
-            if TEST_SHREDDER_LATTICE and read_single_client_name == "shredder":
-                userid = SHREDDER_TEST_KEY  # for test purpose
-
-            arg_map = {dag_name: [userid, read_single_client_name]}
-        request_count += 1
-        
-        meta_dict[c_id].reset()
-        cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
-
-def run_tput_example(cloudburst_client, num_clients, sckt, args):
-    if len(args) < 2 and args[0] != 'create':
-        print(f"{args} too short. Args: kvs_name, k")
-        sys.exit(1)
-
-    if args[0] == 'create':
-        # Create dataset and DAG
-        generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
-        utils.shredder_setup_data(cloudburst_client)
-        create_dag(cloudburst_client)
-        return [], [], [], 0
-    
-    client_name = args[0]
-    k = int(args[1])
-
-    userid_list = cloudburst_client.get_object(key_args())
-    hot_userid_list = random.choices(userid_list, k=int(len(userid_list)*HOT_RATIO))
-    
-    logging.info(f'Running social network, kvs_name {client_name}, k {k}')
-    client_meta_dict = {}
-    profiler = utils.Profiler(bname='social_network', num_clients=num_clients, args=args)
-
-    client_q = queue.Queue(maxsize=num_clients)
-    for i in range(num_clients):
-        c_id = utils.gen_c_id(i)
-        client_q.put(c_id)
-        client_meta_dict[c_id] = utils.ClientMeta(c_id)
-    
-    stop_event = threading.Event()
-    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_meta_dict, client_q, userid_list, hot_userid_list, k, client_name), daemon=True)
-    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_meta_dict, client_q, profiler), daemon=True)
-    
-    call_worker.start()
-    recv_worker.start()
-    
-    for i in range(5):
-        time.sleep(10)
-        epoch_tput, epoch_lat = profiler.print_tput(csv_filename='benchmark_tput.csv')
-        # send epoch result to trigger
-        sckt.send(cp.dumps((epoch_tput, epoch_lat)))
-
-    stop_event.set()
-    call_worker.join()
-    recv_worker.join()
-    
-    return profiler.lat, [], [], 0
