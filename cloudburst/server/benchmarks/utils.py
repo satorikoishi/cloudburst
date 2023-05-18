@@ -96,11 +96,13 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, 
     mean = np.mean(npdata)
     median = np.percentile(npdata, 50)
     p75 = np.percentile(npdata, 75)
+    p90 = np.percentile(npdata, 90)
     p95 = np.percentile(npdata, 95)
     p99 = np.percentile(npdata, 99)
     mx = np.max(npdata)
 
     p25 = np.percentile(npdata, 25)
+    p10 = np.percentile(npdata, 10)
     p05 = np.percentile(npdata, 5)
     p01 = np.percentile(npdata, 1)
     mn = np.min(npdata)
@@ -112,9 +114,10 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, 
               '\tmean: %.3f, median: %.3f\n' +
               '\tmin/max: (%.3f, %.3f)\n' +
               '\tp25/p75: (%.3f, %.3f)\n' +
+              '\tp10/p90: (%.3f, %.3f)\n'
               '\tp5/p95: (%.3f, %.3f)\n' +
               '\tp1/p99: (%.3f, %.3f)') % (ident, len(data), num_clients, tput, unit, mean,
-                                           median, mn, mx, p25, p75, p05, p95,
+                                           median, mn, mx, p25, p75, p10, p90, p05, p95,
                                            p01, p99)
 
     if log:
@@ -138,6 +141,8 @@ def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, 
             'MAX': mx,
             'P25': p25,
             'P75': p75,
+            'P10': p10,
+            'P90': p90,
             'P5': p05,
             'P95': p95,
             'P1': p01,
