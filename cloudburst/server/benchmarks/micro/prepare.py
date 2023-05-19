@@ -45,6 +45,16 @@ def run(cloudburst_client, num_requests, sckt):
     else:
         print('Failed registered function.')
         sys.exit(1)
+        
+    def no_op(cloudburst):
+        return 0xDEADBEEF
+
+    cloud_no_op = cloudburst_client.register(no_op, 'no_op')
+    if cloud_no_op:
+        logging.info('Successfully registered function.')
+    else:
+        print('Failed registered function.')
+        sys.exit(1)
 
     logging.info('Function ready')
 
@@ -56,6 +66,7 @@ def run(cloudburst_client, num_requests, sckt):
     ''' REGISTER DAG '''
     utils.register_dag_for_single_func(cloudburst_client, "read_single")
     utils.register_dag_for_single_func(cloudburst_client, "update_single")
+    utils.register_dag_for_single_func(cloudburst_client, "no_op")
 
     return [], [], [], 0
 
@@ -97,5 +108,5 @@ def test_registered_functions(cloud_read_single, cloud_update_single, arr_size, 
             if np.count_nonzero(arr_2ndread) != 1 or arr_2ndread[0] != 1.0:
                 logging.warn(f'Unexpected result {res_2ndread}, {arr_2ndread} from read_single, size: {size}, idx: {i}')
                 # sys.exit(1)
-
+            
     logging.info(f'Successfully tested function with {client_name}')
