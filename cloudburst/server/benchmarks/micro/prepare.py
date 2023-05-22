@@ -46,7 +46,7 @@ def run(cloudburst_client, num_requests, sckt):
         print('Failed registered function.')
         sys.exit(1)
         
-    def no_op(cloudburst):
+    def no_op(_):
         return 0xDEADBEEF
 
     cloud_no_op = cloudburst_client.register(no_op, 'no_op')
