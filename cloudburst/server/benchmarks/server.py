@@ -37,7 +37,8 @@ from cloudburst.server.benchmarks.comparison import (
     list_traversal,
     read_array,
     social_network,
-    split
+    split,
+    no_op
 )
 import cloudburst.server.utils as sutils
 
@@ -118,6 +119,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'accumulate':
         total, scheduler, kvs, retries = accumulate.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'no_op':
+        total, scheduler, kvs, retries = no_op.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
