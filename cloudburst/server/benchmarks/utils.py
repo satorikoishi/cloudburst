@@ -165,12 +165,12 @@ def register_dag_for_single_func(cloudburst_client, function_name):
         sys.exit(1)
     logging.info(f'Successfully regiestered DAG {function_name}')
 
-def shredder_setup_data(cloudburst_client):
-    cloud_setup_shredder = cloudburst_client.get_function('setup_shredder')
+def shredder_setup_data(cloudburst_client, setup_func='setup'):
+    cloud_setup_shredder = cloudburst_client.get_function(setup_func)
     if cloud_setup_shredder is None:
         def setup_shredder(cloudburst):
-            return cloudburst.execute_js_fun('setup', client_name='shredder')
-        cloud_setup_shredder = cloudburst_client.register(setup_shredder, 'setup_shredder')
+            return cloudburst.execute_js_fun(setup_func, client_name='shredder')
+        cloud_setup_shredder = cloudburst_client.register(setup_shredder, setup_func)
         if cloud_setup_shredder:
             logging.info('Successfully registered setup shredder function.')
         else:

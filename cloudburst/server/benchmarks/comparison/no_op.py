@@ -32,7 +32,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         create_dag(cloudburst_client)
         return [], [], [], 0
     
-    logging.info(f'Running no_op, num_requests: {num_requests}')
+    logging.info(f'Running {dag_name}, num_requests: {num_requests}')
 
     total_time = []
     epoch_req_count = 0
@@ -59,7 +59,7 @@ def run(cloudburst_client, num_requests, sckt, args):
             if sckt:
                 sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
             utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
-                                        (epoch), True, bname='no_op', args=args, csv_filename='benchmark_lat.csv')
+                                        (epoch), True, bname=f'{dag_name}', args=args, csv_filename='benchmark_lat.csv')
 
             epoch += 1
             

@@ -12,11 +12,10 @@ from cloudburst.server.benchmarks import utils
 from cloudburst.shared.reference import CloudburstReference
 from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
-# Args: k
 local_dag_name = 'list_traversal'
 
 # JS rpc version
-rpc_dag_name = 'rpc_list_traversal'
+rpc_dag_name = f'rpc_{local_dag_name}'
 
 # 1000 lists, out of 10000 numbers
 UPPER_BOUND = 10000
@@ -95,7 +94,7 @@ def create_dag(cloudburst_client):
         sys.exit(1)
 
     def rpc_list_traversal(cloudburst, nodeid, depth, client_name='shredder'):
-        nodeid = cloudburst.execute_js_fun('list_traversal', nodeid, depth, client_name=client_name)
+        nodeid = cloudburst.execute_js_fun(local_dag_name, nodeid, depth, client_name=client_name)
         return nodeid
     
     cloud_rpc_list_traversal = cloudburst_client.register(rpc_list_traversal, rpc_dag_name)
@@ -119,17 +118,20 @@ def run(cloudburst_client, num_requests, sckt, args):
     if args[0] == 'create':
         # Create dataset and DAG
         generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
-        utils.shredder_setup_data(cloudburst_client)
+        utils.shredder_setup_data(cloudburst_client, f'{local_dag_name}_setup')
         create_dag(cloudburst_client)
         return [], [], [], 0
     
     single_key = False
+    # if len(args) >= 3:
+    #     if args[-1] == 'tput':
+    #         return run_tput_example(cloudburst_client, num_requests, sckt, args)
+    #     else:
+    #         nodeid = int(args[2])
+    #         single_key = True
     if len(args) >= 3:
-        if args[-1] == 'tput':
-            return run_tput_example(cloudburst_client, num_requests, sckt, args)
-        else:
-            nodeid = int(args[2])
-            single_key = True
+        nodeid = int(args[2])
+        single_key = True
     
     client_name = args[0]
     depth = int(args[1])
@@ -138,116 +140,153 @@ def run(cloudburst_client, num_requests, sckt, args):
 
     nodeid_list = cloudburst_client.get_object(key_args())
     
-    logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
+    logging.info(f'Running {dag_name}, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
 
     total_time = []
-    scheduler_time = []
-    kvs_time = []
+    epoch_req_count = 0
+    epoch_latencies = []
 
-    retries = 0
+    epoch_start = time.time()
+    epoch = 0
 
-    log_start = time.time()
-
-    log_epoch = 0
-    epoch_total = []
-    epoch_req_num = 0
-
-
-    for i in range(num_requests):
+    for _ in range(num_requests):
         if not single_key:
             nodeid = random.choice(nodeid_list)
-        # DAG name = Function name
         arg_map = {dag_name: [nodeid, depth, client_name]}
         
         start = time.time()
-        res = cloudburst_client.call_dag(dag_name, arg_map)
+        res = cloudburst_client.call_dag(dag_name, arg_map, True)
         end = time.time()
-        s_time = end - start
-        
-        start = time.time()
-        res.get()
-        end = time.time()
-        k_time = end - start
-        
-        scheduler_time += [s_time]
-        kvs_time += [k_time]
-        epoch_total += [s_time + k_time]
-        total_time += [s_time + k_time]
-        epoch_req_num += 1
 
-        log_end = time.time()
-        if (log_end - log_start) > 10:
+        if res is not None:
+            epoch_req_count += 1
+        
+        total_time += [end - start]
+        epoch_latencies += [end - start]
+
+        epoch_end = time.time()
+        if (epoch_end - epoch_start) > 10:
             if sckt:
-                sckt.send(cp.dumps((epoch_req_num, epoch_total)))
-            utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
-                                        (log_epoch), True, bname='list_traversal', args=args, csv_filename='benchmark_lat.csv')
+                sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
+            utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
+                                        (epoch), True, bname=f'{dag_name}', args=args, csv_filename='benchmark_lat.csv')
 
-            epoch_req_num = 0
-            epoch_total.clear()
-            log_epoch += 1
-            log_start = time.time()
+            epoch += 1
+            
+            epoch_req_count = 0
+            epoch_latencies.clear()
+            epoch_start = time.time()
 
-    return total_time, scheduler_time, kvs_time, retries
+    return total_time, [], [], 0
 
-def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
-    nodeid_list, dag_name, depth, single_nodeid = args
-    logging.info(f'dag_name: {dag_name}, depth: {depth}')
-    while True:
-        if stop_event.is_set():
-            break
-        c_id = q.get()
-        nodeid = single_nodeid if single_nodeid else random.choice(nodeid_list)
-        # DAG name = Function name
-        arg_map = {dag_name: [nodeid, depth]}
+    # total_time = []
+    # scheduler_time = []
+    # kvs_time = []
+
+    # retries = 0
+
+    # log_start = time.time()
+
+    # log_epoch = 0
+    # epoch_total = []
+    # epoch_req_num = 0
+
+
+    # for i in range(num_requests):
+    #     if not single_key:
+    #         nodeid = random.choice(nodeid_list)
+    #     # DAG name = Function name
+    #     arg_map = {dag_name: [nodeid, depth, client_name]}
         
-        meta_dict[c_id].reset()
-        cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
+    #     start = time.time()
+    #     res = cloudburst_client.call_dag(dag_name, arg_map)
+    #     end = time.time()
+    #     s_time = end - start
+        
+    #     start = time.time()
+    #     res.get()
+    #     end = time.time()
+    #     k_time = end - start
+        
+    #     scheduler_time += [s_time]
+    #     kvs_time += [k_time]
+    #     epoch_total += [s_time + k_time]
+    #     total_time += [s_time + k_time]
+    #     epoch_req_num += 1
 
-def run_tput_example(cloudburst_client, num_clients, sckt, args):
-    if len(args) < 2 and args[0] != 'c':
-        print(f"{args} too short. Args: kvs_name, depth")
-        sys.exit(1)
+    #     log_end = time.time()
+    #     if (log_end - log_start) > 10:
+    #         if sckt:
+    #             sckt.send(cp.dumps((epoch_req_num, epoch_total)))
+    #         utils.print_latency_stats(epoch_total, 'EPOCH %d E2E' %
+    #                                     (log_epoch), True, bname=f'{dag_name}', args=args, csv_filename='benchmark_lat.csv')
 
-    if args[0] == 'c':
-        # Create dataset and DAG
-        generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
-        utils.shredder_setup_data(cloudburst_client)
-        create_dag(cloudburst_client)
-        return [], [], [], 0
-    
-    client_name = args[0]
-    depth = int(args[1])
-    if len(args) >= 4:  
-        single_nodeid = int(args[2])
-    else:
-        single_nodeid = None
-    dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
-    nodeid_list = cloudburst_client.get_object(key_args())
-    logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
-    client_meta_dict = {}
-    profiler = utils.Profiler(bname='list_traversal', num_clients=num_clients, args=args)
+    #         epoch_req_num = 0
+    #         epoch_total.clear()
+    #         log_epoch += 1
+    #         log_start = time.time()
 
-    client_q = queue.Queue(maxsize=num_clients)
-    for i in range(num_clients):
-        c_id = utils.gen_c_id(i)
-        client_q.put(c_id)
-        client_meta_dict[c_id] = utils.ClientMeta(c_id)
-    
-    stop_event = threading.Event()
-    call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_meta_dict, client_q, nodeid_list, dag_name, depth, single_nodeid), daemon=True)
-    recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_meta_dict, client_q, profiler), daemon=True)
-    
-    call_worker.start()
-    recv_worker.start()
-    
-    for i in range(5):
-        time.sleep(10)
-        epoch_tput, epoch_lat = profiler.print_tput(csv_filename='benchmark_tput.csv')
-        # send epoch result to trigger
-        sckt.send(cp.dumps((epoch_tput, epoch_lat)))
+    # return total_time, scheduler_time, kvs_time, retries
 
-    stop_event.set()
-    call_worker.join()
-    recv_worker.join()
+# def client_call_dag(cloudburst_client, stop_event, meta_dict, q, *args):
+#     nodeid_list, dag_name, depth, single_nodeid = args
+#     logging.info(f'dag_name: {dag_name}, depth: {depth}')
+#     while True:
+#         if stop_event.is_set():
+#             break
+#         c_id = q.get()
+#         nodeid = single_nodeid if single_nodeid else random.choice(nodeid_list)
+#         # DAG name = Function name
+#         arg_map = {dag_name: [nodeid, depth]}
+        
+#         meta_dict[c_id].reset()
+#         cloudburst_client.call_dag(dag_name, arg_map, direct_response=True, async_response=True, output_key=c_id)
+
+# def run_tput_example(cloudburst_client, num_clients, sckt, args):
+#     if len(args) < 2 and args[0] != 'c':
+#         print(f"{args} too short. Args: kvs_name, depth")
+#         sys.exit(1)
+
+#     if args[0] == 'c':
+#         # Create dataset and DAG
+#         generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
+#         utils.shredder_setup_data(cloudburst_client)
+#         create_dag(cloudburst_client)
+#         return [], [], [], 0
     
-    return profiler.lat, [], [], 0
+#     client_name = args[0]
+#     depth = int(args[1])
+#     if len(args) >= 4:  
+#         single_nodeid = int(args[2])
+#     else:
+#         single_nodeid = None
+#     dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
+#     nodeid_list = cloudburst_client.get_object(key_args())
+#     logging.info(f'Running list traversal, kvs_name {client_name}, depth {depth}, dag: {dag_name}')
+#     client_meta_dict = {}
+#     profiler = utils.Profiler(bname='list_traversal', num_clients=num_clients, args=args)
+
+#     client_q = queue.Queue(maxsize=num_clients)
+#     for i in range(num_clients):
+#         c_id = utils.gen_c_id(i)
+#         client_q.put(c_id)
+#         client_meta_dict[c_id] = utils.ClientMeta(c_id)
+    
+#     stop_event = threading.Event()
+#     call_worker = threading.Thread(target=client_call_dag, args=(cloudburst_client, stop_event, client_meta_dict, client_q, nodeid_list, dag_name, depth, single_nodeid), daemon=True)
+#     recv_worker = threading.Thread(target=utils.client_recv_dag_response, args=(cloudburst_client, stop_event, client_meta_dict, client_q, profiler), daemon=True)
+    
+#     call_worker.start()
+#     recv_worker.start()
+    
+#     for i in range(5):
+#         time.sleep(10)
+#         epoch_tput, epoch_lat = profiler.print_tput(csv_filename='benchmark_tput.csv')
+#         # send epoch result to trigger
+#         sckt.send(cp.dumps((epoch_tput, epoch_lat)))
+
+#     stop_event.set()
+#     call_worker.join()
+#     recv_worker.join()
+    
+#     return profiler.lat, [], [], 0
