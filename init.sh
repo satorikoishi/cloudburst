@@ -15,5 +15,6 @@ cd ..
 # anna
 git clone --recurse-submodules https://github.com/satorikoishi/anna.git
 cd anna
+git checkout f3ae84d
 ./scripts/build.sh -g
 cd ..
