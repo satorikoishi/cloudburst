@@ -1,7 +1,5 @@
 import ast
-from cloudburst.shared.serializer import Serializer
-
-serializer = Serializer()
+import inspect
 
 def k_hop(cloudburst, id, k):
         friends = cloudburst.get(id).tolist()
@@ -15,7 +13,5 @@ def k_hop(cloudburst, id, k):
         
         return sum
 
-body = serializer.dump(k_hop)
-
-res = ast.parse(serializer.load(body))
-print(res)
+res = ast.parse(inspect.getsource(k_hop))
+print(ast.dump(res))
