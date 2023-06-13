@@ -1,5 +1,10 @@
+from _ast import AST, FunctionDef
 import ast
 import inspect
+from typing import Any
+
+def calc(RPN_str):
+    pass
 
 def prettify(ast_tree_str, indent=4):
     ret = []
@@ -59,6 +64,101 @@ def prettify(ast_tree_str, indent=4):
 
     print(''.join(ret))
 
+def check_args(node):
+    args = []
+    if isinstance(node, ast.FunctionDef):
+        for idx, arg in enumerate(node.args.args):
+            if idx == 0:
+                continue    # ignore arg cloudburst
+            args.append(arg.arg)
+    return args
+
+def visit_call(node, args=[]):
+    if isinstance(node, ast.Call):
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.Attribute) and isinstance(child.value, ast.Name) and child.value.id == 'cloudburst':
+                prettify(ast.dump(child))
+
+## TODO: check key
+def check_call(node, args=[]):
+    if isinstance(node, ast.Call):
+        if isinstance(node.func, ast.Attribute):
+            if node.func.value.id == 'cloudburst':
+                # print(f'node: {type(node).__name__:{16}}, fields: {list(ast.iter_fields(node))}')
+                return "1"
+    return ""
+
+def check_loop(node, args=[]):
+    if isinstance(node, ast.For):        
+        if isinstance(node.iter, ast.Call):
+            if isinstance(node.iter.func, ast.Name):
+                print(f'func id: {node.iter.func.id}, args: {node.iter.args}')
+                if node.iter.func.id == 'range':                    
+                    ## A for range loop, we can analyze loop times
+                    ## Only consider arg0
+                    range_arg0 = node.iter.args[0]
+                    if isinstance(range_arg0, ast.Constant):
+                        # print(f'node: {type(node).__name__:{16}}, fields: {list(ast.iter_fields(node))}')
+                        return str(range_arg0.value)
+                    elif isinstance(range_arg0, ast.Name):
+                        # print(f'node: {type(node).__name__:{16}}, fields: {list(ast.iter_fields(node))}')
+                        if range_arg0.id in args:
+                            return range_arg0.id
+                        else:
+                            return "UnknownArg"
+    return ""
+    
+def loop_count(node, args=[]):
+    # print(f'Nodetype: {type(node).__name__:{16}} {node}')
+    RPN_str = ""
+    
+    ## If call, it is the most underlying layer, no need to check child
+    call_res = check_call(node, args)
+    if call_res:
+        print(f'Node {node} get call res: {call_res}')
+        return call_res
+    
+    for child in ast.iter_child_nodes(node):
+        child_RPN_str = loop_count(child, args)
+        if child_RPN_str:
+            if RPN_str:
+                RPN_str = " ".join([RPN_str, child_RPN_str, '+'])
+            else:
+                RPN_str = child_RPN_str
+    
+    loop_res = check_loop(node, args)
+    if loop_res:
+        print(f'Node {node} get loop res: {loop_res}')
+        RPN_str = " ".join([RPN_str, loop_res, '*'])
+    
+    # print(f'node: {type(node).__name__:{16}}, fields: {list(ast.iter_fields(node))} RPN: {RPN_str}')
+    
+    return RPN_str
+    
+class MyVisitor(ast.NodeVisitor):
+    def generic_visit(self, node):
+        print(f'Nodetype: {type(node).__name__:{16}} {node}')
+        ast.NodeVisitor.generic_visit(self, node)
+visitor = MyVisitor()
+
+class SearchVisitor(ast.NodeVisitor):
+    def generic_visit(self, node):
+        visit_call(node)
+        ast.NodeVisitor.generic_visit(self, node)
+s_visitor = SearchVisitor()
+
+class ArgVisitor(ast.NodeVisitor):
+    def visit_FunctionDef(self, node: FunctionDef):
+        res = []
+        for idx, arg in enumerate(node.args.args):
+            if idx == 0:
+                continue    # ignore arg cloudburst
+            print(f'arg{idx}: {arg.arg}')
+            res.append(arg.arg)
+        
+a_visitor = ArgVisitor()
+
+## k hop
 def k_hop(cloudburst, id, k):
         friends = cloudburst.get(id).tolist()
         sum = len(friends)
@@ -74,28 +174,57 @@ def k_hop(cloudburst, id, k):
 res = ast.parse(inspect.getsource(k_hop))
 # prettify(ast.dump(res))
 
-class MyVisitor(ast.NodeVisitor):
-    def generic_visit(self, node):
-        print(f'Nodetype: {type(node).__name__:{16}} {node}')
-        ast.NodeVisitor.generic_visit(self, node)
+# print('Using NodeVisitor (depth first):')
+# visitor.visit(res)
 
-visitor = MyVisitor()
-print('Using NodeVisitor (depth first):')
-visitor.visit(res)
-
-print('\nWalk()ing the tree breadth first:')
-for node in ast.walk(res):
-    print(f'Nodetype: {type(node).__name__:{16}} {node}')
-    
-class SearchVisitor(ast.NodeVisitor):
-    def generic_visit(self, node):
-        if isinstance(node, ast.Call):
-            for child in ast.iter_child_nodes(node):
-                if isinstance(child, ast.Attribute) and isinstance(child.value, ast.Name) and child.value.id == 'cloudburst':
-                    prettify(ast.dump(child))
-
-        ast.NodeVisitor.generic_visit(self, node)
+# print('\nWalk()ing the tree breadth first:')
+# for node in ast.walk(res):
+#     print(f'Nodetype: {type(node).__name__:{16}} {node}')
 
 print('Search for function calls')
-s_visitor = SearchVisitor()
 s_visitor.visit(res)
+
+print('----------------------------------------------------- k hop end, list traversal now -----------------------------------------------------------')
+
+## list traversal
+def list_traversal(cloudburst, nodeid, depth, client_name):
+    nodeid += cloudburst.get(nodeid);
+    for i in range(depth):
+        # nodeid = cloudburst.get(nodeid, client_name)[0]
+        nodeid_list = cloudburst.get(nodeid, client_name)
+        node_id = nodeid_list[0]
+    for i in range(3):
+        nodeid += cloudburst.get(nodeid);
+    nodeid += cloudburst.get(nodeid);
+    
+    return nodeid
+
+res = ast.parse(inspect.getsource(list_traversal))
+prettify(ast.dump(res))
+
+# print('Using NodeVisitor (depth first):')
+# visitor.visit(res)
+
+# print('\nWalk()ing the tree breadth first:')
+# for node in ast.walk(res):
+#     print(f'Nodetype: {type(node).__name__:{16}} {node}')
+
+print('Get args')
+# a_visitor.visit(res)
+args = []
+for node in ast.walk(res):
+    args = check_args(node)
+    if len(args) > 0:
+        break
+print(args)
+
+print('Search for function calls')
+s_visitor.visit(res)
+
+## Input: args array, Output: call count array, len = len(args) + 1
+## Call count = [count * arg] + fixed times
+## Check get/put key, if same key, count as cache?
+
+print(list(ast.iter_child_nodes(res)))
+
+print(loop_count(res, args))
