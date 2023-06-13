@@ -3,8 +3,28 @@ import ast
 import inspect
 from typing import Any
 
-def calc(RPN_str):
-    pass
+def calc(RPN_str, arg_map):
+    RPN_list = RPN_str.split()
+    print(RPN_list)
+    
+    stack = []
+    for elem in RPN_list:
+        if elem == '+' or elem == '*':
+            ## operator
+            right = stack.pop()
+            left = stack.pop()
+            if elem == '+':
+                stack.append(left + right)
+            else:
+                stack.append(left * right)
+        elif elem.isnumeric():
+            ## const num
+            stack.append(int(elem))
+        else:
+            ## variable
+            stack.append(int(arg_map[elem]))
+    assert(len(stack) == 1)
+    return stack.pop()
 
 def prettify(ast_tree_str, indent=4):
     ret = []
@@ -227,4 +247,7 @@ s_visitor.visit(res)
 
 print(list(ast.iter_child_nodes(res)))
 
-print(loop_count(res, args))
+RPN_str = loop_count(res, args)
+arg_map = {'nodeid': 1, 'depth': 32, 'client_name': 'a'}
+call_count = calc(RPN_str, arg_map)
+print(f'RPN: {RPN_str}, args: {arg_map}, call {call_count} times')
