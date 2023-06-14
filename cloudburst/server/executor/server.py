@@ -39,6 +39,7 @@ from cloudburst.shared.proto.internal_pb2 import (
     ExecutorStatistics,
     ThreadStatus,
 )
+from cloudburst.shared.arbiter import Arbiter
 
 REPORT_THRESH = 5
 BATCH_SIZE_MAX = 20
@@ -56,6 +57,7 @@ def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
 
     context = zmq.Context(1)
     poller = zmq.Poller()
+    arbiter = Arbiter()
 
     pin_socket = context.socket(zmq.PULL)
     pin_socket.bind(sutils.BIND_ADDR_TEMPLATE % (sutils.PIN_PORT + thread_id))
@@ -171,7 +173,7 @@ def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
             work_start = time.time()
             batching = pin(pin_socket, pusher_cache, client, status,
                            function_cache, runtimes, exec_counts, user_library,
-                           local, batching)
+                           local, batching, arbiter)
             utils.push_status(schedulers, pusher_cache, status)
 
             elapsed = time.time() - work_start

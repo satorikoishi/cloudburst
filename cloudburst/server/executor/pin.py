@@ -18,10 +18,11 @@ import sys
 import cloudburst.server.utils as sutils
 from cloudburst.server.executor import utils
 from cloudburst.shared.proto.internal_pb2 import PinFunction
+from cloudburst.shared.arbiter import Arbiter
 
 
 def pin(pin_socket, pusher_cache, kvs, status, function_cache, runtimes,
-        exec_counts, user_library, local, batching):
+        exec_counts, user_library, local, batching, arbiter):
     serialized = pin_socket.recv()
     pin_msg = PinFunction()
     pin_msg.ParseFromString(serialized)
@@ -43,6 +44,7 @@ def pin(pin_socket, pusher_cache, kvs, status, function_cache, runtimes,
     # registered -- so we keep trying to retrieve it.
     while not func:
         func = utils.retrieve_function(name, kvs, user_library)
+    arbiter.bind_func(func, name)
 
     if name not in function_cache:
         function_cache[name] = func
