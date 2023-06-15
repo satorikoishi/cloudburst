@@ -147,7 +147,7 @@ def loop_count(node, args=[]):
                 RPN_str = child_RPN_str
     
     loop_res = check_loop(node, args)
-    if loop_res:
+    if loop_res and RPN_str:
         print(f'Node {node} get loop res: {loop_res}')
         RPN_str = " ".join([RPN_str, loop_res, '*'])
     
@@ -216,6 +216,8 @@ def list_traversal(cloudburst, nodeid, depth, client_name):
     for i in range(3):
         nodeid += cloudburst.get(nodeid);
     nodeid += cloudburst.get(nodeid);
+    for i in range(depth):
+        pass
     
     return nodeid
 

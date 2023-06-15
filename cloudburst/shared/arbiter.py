@@ -66,7 +66,7 @@ def generate_RPN_str(node, args=[]):
                 RPN_str = child_RPN_str
     
     loop_res = check_loop(node, args)
-    if loop_res:
+    if loop_res and RPN_str:
         # print(f'Node {node} get loop res: {loop_res}')
         RPN_str = " ".join([RPN_str, loop_res, '*'])
     
