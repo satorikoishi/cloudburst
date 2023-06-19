@@ -2,6 +2,7 @@ from _ast import AST, FunctionDef
 import ast
 import inspect
 from typing import Any
+import textwrap
 
 def calc(RPN_str, arg_map):
     RPN_list = RPN_str.split()
@@ -253,3 +254,15 @@ RPN_str = loop_count(res, args)
 arg_map = {'nodeid': 1, 'depth': 32, 'client_name': 'a'}
 call_count = calc(RPN_str, arg_map)
 print(f'RPN: {RPN_str}, args: {arg_map}, call {call_count} times')
+
+def nested_func():
+    ''' REGISTER FUNCTIONS '''
+    def nested_sample(cloudburst, nodeid, depth):
+        for i in range(depth):
+            nodeid = cloudburst.get(nodeid)[0]
+        return nodeid
+
+    return nested_sample
+
+res = ast.parse(textwrap.dedent(inspect.getsource(nested_func())))
+prettify(ast.dump(res))
