@@ -44,6 +44,8 @@ def pin(pin_socket, pusher_cache, kvs, status, function_cache, runtimes,
     # registered -- so we keep trying to retrieve it.
     while not func:
         func = utils.retrieve_function(name, kvs, user_library)
+    
+    print(f'func of type:{type(func)}')
     arbiter.bind_func(func, name)
 
     if name not in function_cache:
