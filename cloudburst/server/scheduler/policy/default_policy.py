@@ -261,9 +261,12 @@ class DefaultCloudburstSchedulerPolicy(BaseCloudburstSchedulerPolicy):
         serialized = pin_msg.SerializeToString()
 
         while True:
-            # Pick a random executor from the set of candidates and attempt to
-            # pin this function there.
-            node, tid = sys_random.sample(candidates, 1)[0]
+            # # Pick a random executor from the set of candidates and attempt to
+            # # pin this function there.
+            # node, tid = sys_random.sample(candidates, 1)[0]
+            
+            # Pin the first candidate
+            node, tid = candidates[0]
 
             for other_node, _ in self.pending_dags[dag_name]:
                 if len(candidates) > 1 and node == other_node:
