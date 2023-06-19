@@ -265,8 +265,13 @@ class DefaultCloudburstSchedulerPolicy(BaseCloudburstSchedulerPolicy):
             # # pin this function there.
             # node, tid = sys_random.sample(candidates, 1)[0]
             
-            # Pin the first candidate
-            node, tid = candidates[0]
+            # Pin the candidate with smallest tid
+            node = None
+            tid = 10000
+            for c_node, c_tid in candidates:
+                if c_tid < tid:
+                    node = c_node
+                    tid = c_tid
 
             for other_node, _ in self.pending_dags[dag_name]:
                 if len(candidates) > 1 and node == other_node:
