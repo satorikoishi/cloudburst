@@ -83,7 +83,7 @@ class Arbiter:
         self.func_args = None
         self.RPN_str = None
 
-    def bind_func(self, func_name, func):
+    def bind_func(self, func, func_name):
         logging.info(f'binding func {func_name}')
         self.func = func
         self.func_name = func_name
