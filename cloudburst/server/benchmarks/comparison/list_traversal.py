@@ -12,10 +12,12 @@ from cloudburst.server.benchmarks import utils
 from cloudburst.shared.reference import CloudburstReference
 from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
-local_dag_name = 'list_traversal'
+dag_name = 'list_traversal'
 
-# JS rpc version
-rpc_dag_name = f'rpc_{local_dag_name}'
+# local_dag_name = 'list_traversal'
+
+# # JS rpc version
+# rpc_dag_name = f'rpc_{local_dag_name}'
 
 # 1000 lists, out of 10000 numbers
 UPPER_BOUND = 10000
@@ -82,6 +84,10 @@ def generate_dataset(cloudburst_client, client_name):
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
     def list_traversal(cloudburst, nodeid, depth, client_name=DEFAULT_CLIENT_NAME):
+        if client_name == 'shredder':
+            nodeid = cloudburst.execute_js_fun(local_dag_name, nodeid, depth, client_name=client_name)
+            return nodeid
+        
         for i in range(depth):
             nodeid = cloudburst.get(gen_nodeid(nodeid), client_name=client_name)[0]
         return nodeid
@@ -93,20 +99,20 @@ def create_dag(cloudburst_client):
         print('Failed registered function.')
         sys.exit(1)
 
-    def rpc_list_traversal(cloudburst, nodeid, depth, client_name='shredder'):
-        nodeid = cloudburst.execute_js_fun(local_dag_name, nodeid, depth, client_name=client_name)
-        return nodeid
+    # def rpc_list_traversal(cloudburst, nodeid, depth, client_name='shredder'):
+    #     nodeid = cloudburst.execute_js_fun(local_dag_name, nodeid, depth, client_name=client_name)
+    #     return nodeid
     
-    cloud_rpc_list_traversal = cloudburst_client.register(rpc_list_traversal, rpc_dag_name)
-    if cloud_rpc_list_traversal:
-        logging.info('Successfully registered function.')
-    else:
-        print('Failed registered function.')
-        sys.exit(1)
+    # cloud_rpc_list_traversal = cloudburst_client.register(rpc_list_traversal, rpc_dag_name)
+    # if cloud_rpc_list_traversal:
+    #     logging.info('Successfully registered function.')
+    # else:
+    #     print('Failed registered function.')
+    #     sys.exit(1)
     
     ''' REGISTER DAG '''
     utils.register_dag_for_single_func(cloudburst_client, local_dag_name)
-    utils.register_dag_for_single_func(cloudburst_client, rpc_dag_name)
+    # utils.register_dag_for_single_func(cloudburst_client, rpc_dag_name)
     logging.info('Finished registering dag')
     
 
@@ -136,7 +142,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     client_name = args[0]
     depth = int(args[1])
 
-    dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
+    # dag_name = rpc_dag_name if client_name == 'shredder' else local_dag_name
 
     nodeid_list = cloudburst_client.get_object(key_args())
     
