@@ -89,7 +89,7 @@ def exec_function(exec_socket, kvs, user_states_kvs, user_library, cache, functi
                      + 'into the KVS.')
 
 
-def _exec_func_normal(user_states_kvs, func, args, user_lib, cache, arbiter):
+def _exec_func_normal(user_states_kvs, func, args, user_lib, cache, arbiter=None):
     # NOTE: We may not want to keep this permanently but need it for
     # continuations if the upstream function returns multiple things.
     processed = tuple()
@@ -130,7 +130,7 @@ def _exec_func_causal(user_states_kvs, func, args, user_lib, schedule=None,
     return _run_function(func, refs, args, user_lib)
 
 
-def _run_function(func, refs, args, user_lib, arbiter):
+def _run_function(func, refs, args, user_lib, arbiter=None):
     # Set the first argument to the user library.
     func_args = (user_lib,)
 
@@ -257,7 +257,7 @@ def _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
 
 
 def exec_dag_function(pusher_cache, kvs, user_states_kvs, trigger_sets, function, schedules,
-                      user_library, dag_runtimes, cache, schedulers, batching, arbiter):
+                      user_library, dag_runtimes, cache, schedulers, batching, arbiter=None):
     if schedules[0].consistency == NORMAL:
         finished, successes = _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs,
                                                         trigger_sets, function,
@@ -299,7 +299,7 @@ def _construct_trigger(sid, fname, result):
 
 def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, function,
                               schedules, user_lib, cache, schedulers,
-                              batching, arbiter):
+                              batching, arbiter=None):
     fname = schedules[0].target_function
 
     # We construct farg_sets to have a request by request set of arguments.
