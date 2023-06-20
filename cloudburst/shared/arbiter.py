@@ -1,5 +1,6 @@
 import ast
 import inspect
+import textwrap
 import logging
 
 def check_args(node):
@@ -87,7 +88,7 @@ class Arbiter:
         logging.info(f'binding func {func_name}')
         self.func = func
         self.func_name = func_name
-        self.func_ast = ast.parse(inspect.getsource(func))
+        self.func_ast = ast.parse(textwrap.dedent(inspect.getsource(func)))
         self.func_args = get_func_args(self.func_ast)
         self.RPN_str = generate_RPN_str(self.func_ast, self.func_args)
         logging.info(f'ARG: {self.func_args}, RPN_str: {self.RPN_str}')

@@ -266,3 +266,5 @@ def nested_func():
 
 res = ast.parse(textwrap.dedent(inspect.getsource(nested_func())))
 prettify(ast.dump(res))
+res = ast.parse(textwrap.dedent(inspect.getsource(nested_func)))
+prettify(ast.dump(res))
