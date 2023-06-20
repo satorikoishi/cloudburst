@@ -85,14 +85,14 @@ def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
     def list_traversal(cloudburst, nodeid, depth, client_name=DEFAULT_CLIENT_NAME):
         if client_name == 'shredder':
-            nodeid = cloudburst.execute_js_fun(local_dag_name, nodeid, depth, client_name=client_name)
+            nodeid = cloudburst.execute_js_fun(dag_name, nodeid, depth, client_name=client_name)
             return nodeid
         
         for i in range(depth):
             nodeid = cloudburst.get(gen_nodeid(nodeid), client_name=client_name)[0]
         return nodeid
 
-    cloud_list_traversal = cloudburst_client.register(list_traversal, local_dag_name)
+    cloud_list_traversal = cloudburst_client.register(list_traversal, dag_name)
     if cloud_list_traversal:
         logging.info('Successfully registered function.')
     else:
@@ -100,7 +100,7 @@ def create_dag(cloudburst_client):
         sys.exit(1)
 
     # def rpc_list_traversal(cloudburst, nodeid, depth, client_name='shredder'):
-    #     nodeid = cloudburst.execute_js_fun(local_dag_name, nodeid, depth, client_name=client_name)
+    #     nodeid = cloudburst.execute_js_fun(dag_name, nodeid, depth, client_name=client_name)
     #     return nodeid
     
     # cloud_rpc_list_traversal = cloudburst_client.register(rpc_list_traversal, rpc_dag_name)
@@ -111,7 +111,7 @@ def create_dag(cloudburst_client):
     #     sys.exit(1)
     
     ''' REGISTER DAG '''
-    utils.register_dag_for_single_func(cloudburst_client, local_dag_name)
+    utils.register_dag_for_single_func(cloudburst_client, dag_name)
     # utils.register_dag_for_single_func(cloudburst_client, rpc_dag_name)
     logging.info('Finished registering dag')
     
@@ -124,7 +124,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     if args[0] == 'create':
         # Create dataset and DAG
         generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
-        utils.shredder_setup_data(cloudburst_client, f'{local_dag_name}_setup')
+        utils.shredder_setup_data(cloudburst_client, f'{dag_name}_setup')
         create_dag(cloudburst_client)
         return [], [], [], 0
     
