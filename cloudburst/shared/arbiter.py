@@ -139,5 +139,6 @@ class Arbiter:
             final_args += ('anna',)
         
         logging.info(f'Dependent access: {dependent_access_times}, choose: {final_args[-1]}')
+        logging.info(f'Args: {args}, Final_args: {final_args}')
         
         return final_args
