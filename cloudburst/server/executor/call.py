@@ -153,9 +153,11 @@ def _run_function(func, refs, args, user_lib, arbiter=None):
 
             func_args += (arg,)
     
-    final_args = arbiter.process_args(func_args)
-
-    return func(*final_args)
+    if arbiter:
+        final_args = arbiter.process_args(func_args)
+        return func(*final_args)
+    else:
+        return func(*func_args)
 
 
 def _resolve_ref_normal(refs, user_states_kvs, cache):
