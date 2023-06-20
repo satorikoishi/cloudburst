@@ -3,6 +3,8 @@ import inspect
 import textwrap
 import logging
 
+DEPENDENT_ACCESS_THRESHOLD = 3
+
 def check_args(node):
     args = []
     if isinstance(node, ast.FunctionDef):
@@ -115,3 +117,27 @@ class Arbiter:
                 stack.append(int(arg_map[elem]))
         assert(len(stack) == 1)
         return stack.pop()
+    
+    def process_args(self, args):
+        client_name = args[-1]
+        if not isinstance(client_name, str) or client_name != 'arbiter':
+            logging.info(f'Arbiter returns original args')
+            return args
+        
+        assert len(args) == len(self.func_args) + 1, f'Final_arg len: {len(args)}, Func_arg len: {len(self.func_args)}'
+        
+        arg_map = {}
+        for arg_i, arg in enumerate(self.func_args):
+            arg_map[arg] = args[arg_i + 1]
+        
+        dependent_access_times = self.calc(arg_map)
+        
+        final_args = args[:-1]
+        if dependent_access_times > DEPENDENT_ACCESS_THRESHOLD:
+            final_args.append('shredder')
+        else:
+            final_args.append('anna')
+        
+        logging.info(f'Dependent access: {dependent_access_times}, choose: {final_args[-1]}')
+        
+        return final_args
