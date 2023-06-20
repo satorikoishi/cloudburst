@@ -134,9 +134,9 @@ class Arbiter:
         
         final_args = args[:-1]
         if dependent_access_times > DEPENDENT_ACCESS_THRESHOLD:
-            final_args.append('shredder')
+            final_args += ('shredder',)
         else:
-            final_args.append('anna')
+            final_args += ('anna',)
         
         logging.info(f'Dependent access: {dependent_access_times}, choose: {final_args[-1]}')
         
