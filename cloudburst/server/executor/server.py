@@ -262,7 +262,7 @@ def executor(ip, mgmt_ip, user_states, schedulers, thread_id):
                                                 [triggers], function_cache[fname],
                                                 [schedule], user_library,
                                                 dag_runtimes, cache, schedulers,
-                                                batching)[0]
+                                                batching, arbiter)[0]
                     user_library.close()
 
                     del received_triggers[trkey]
