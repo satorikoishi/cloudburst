@@ -18,11 +18,15 @@ KEY_MAX = 1000000
 HOT_KEY  = 0
 VALUE = 1
 
-def generate_dataset(cloudburst_client, client_name):    
+def generate_dataset(cloudburst_client, client_name):
     for key in range(KEY_MAX):
         cloudburst_client.put_object(str(key), VALUE, client_name=client_name)
+        
+        # debug logging
+        if key % 1000 == 0:
+            logging.info(f'Generating key: {key} for client: {client_name}')
     
-    logging.info('Finished generating dataset')
+    logging.info('Finished generating dataset for client {client_name}')
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
