@@ -112,6 +112,6 @@ while end_recv < sent_msgs:
 
 logging.info('*** END ***')
 
-if len(total) > 0:
+if epoch > 2 and len(total) > 0:
     utils.print_latency_stats(total, 'E2E TOTAL', True, bname=bname, args=args, csv_filename='latency.csv', num_clients=num_clients)
     utils.log_throughput_to_csv('TOTAL', total_tput/total_elapsed, bname=bname, num_clients=num_clients, args=args, duration=elapsed, csv_filename='throughput.csv')
