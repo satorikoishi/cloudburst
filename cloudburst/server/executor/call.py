@@ -36,6 +36,7 @@ from cloudburst.shared.proto.cloudburst_pb2 import (
 )
 from cloudburst.shared.reference import CloudburstReference
 from cloudburst.shared.serializer import Serializer
+from cloudburst.shared.utils import OUTPUT_KEY_EXEC_LATENCY
 
 serializer = Serializer()
 
@@ -377,7 +378,7 @@ def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, 
                                  (schedule.dag.name, trigger.id))
                     # WARNING: Only changed in normal, not in causal
                     if schedule.output_key:
-                        if schedule.output_key == sutils.OUTPUT_KEY_EXEC_LATENCY and arbiter:
+                        if schedule.output_key == OUTPUT_KEY_EXEC_LATENCY and arbiter:
                             # Send back latency
                             sckt.send(serializer.dump([arbiter.exec_end(), result]))
                         else:

@@ -41,6 +41,7 @@ from cloudburst.shared.utils import (
     LIST_PORT
 )
 from cloudburst.shared.kvs_client import AnnaKvsClient, KvsClient
+from cloudburst.shared.utils import OUTPUT_KEY_EXEC_LATENCY
 
 serializer = Serializer()
 
@@ -239,6 +240,9 @@ class CloudburstConnection():
 
         if output_key:
             dc.output_key = output_key
+            
+        if exec_latency:
+            dc.output_key = OUTPUT_KEY_EXEC_LATENCY
 
         if client_id:
             dc.client_id = client_id

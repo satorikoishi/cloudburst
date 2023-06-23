@@ -35,3 +35,6 @@ DAG_DELETE_PORT = 5006
 
 # The name of the default KVS states client.
 DEFAULT_CLIENT_NAME = 'anna'
+
+# For executor to judge if needs to return exec latency
+OUTPUT_KEY_EXEC_LATENCY = 'EXEC_LATENCY'

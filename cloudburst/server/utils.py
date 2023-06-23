@@ -49,9 +49,6 @@ ok = GenericResponse()
 ok.success = True
 ok_resp = ok.SerializeToString()
 
-# For executor to judge if needs to return exec latency
-OUTPUT_KEY_EXEC_LATENCY = 'EXEC_LATENCY'
-
 # Create a default vector clock for keys that have no dependencies.
 DEFAULT_VC = VectorClock({'base': MaxIntLattice(1)})
 
