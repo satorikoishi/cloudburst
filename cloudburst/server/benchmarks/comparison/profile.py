@@ -13,8 +13,7 @@ from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 dag_name = 'profile'
 
-# 100000 lists, out of 100000 numbers
-KEY_MAX = 1000000
+KEY_MAX = 128000
 HOT_KEY  = '0'
 VALUE = 1
 
