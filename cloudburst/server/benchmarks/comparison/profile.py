@@ -82,23 +82,26 @@ def run(cloudburst_client, num_requests, sckt, args):
 
     epoch = 0
     
-    # TODO: get executor profile...
     for _ in range(num_requests):
         arg_map = {dag_name: [start_key, access_count, hot, client_name]}
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map, True)
         end = time.time()
-
-        if res is not None:
-            epoch_req_count += 1
-        
-        total_time += [end - start]
-        epoch_latencies += [end - start]
         
         if not hot:
             # Update start key for every request, to disable cache
             start_key = str(int(start_key) + access_count)
+
+        if not res:
+            # timeout... TODO: figure out why
+            logging.info('Return None, why takes so long time????????????')
+            continue
+        
+        epoch_req_count += 1
+        
+        total_time += [end - start]
+        epoch_latencies += [end - start]
     
     # Always sends back latency, no matter epoch duration
     if sckt:
