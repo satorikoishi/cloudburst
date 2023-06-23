@@ -2,6 +2,7 @@ import ast
 import inspect
 import textwrap
 import logging
+import time
 
 DEPENDENT_ACCESS_THRESHOLD = 3
 
@@ -85,6 +86,7 @@ class Arbiter:
         self.func_ast = None
         self.func_args = None
         self.RPN_str = None
+        self.exec_start_time = time.time()  ## There's no parallel execution
 
     def bind_func(self, func, func_name):
         logging.info(f'binding func {func_name}')
@@ -94,6 +96,12 @@ class Arbiter:
         self.func_args = get_func_args(self.func_ast)
         self.RPN_str = generate_RPN_str(self.func_ast, self.func_args)
         logging.info(f'ARG: {self.func_args}, RPN_str: {self.RPN_str}')
+        
+    def exec_start(self):
+        self.exec_start_time = time.time()
+    
+    def exec_end(self):
+        return time.time() - self.exec_start_time
 
     def calc(self, arg_map):
         RPN_list = self.RPN_str.split()

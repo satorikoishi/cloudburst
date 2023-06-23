@@ -215,7 +215,7 @@ class CloudburstConnection():
 
     def call_dag(self, dname, arg_map, direct_response=False, async_response=False,
                  consistency=NORMAL, output_key=None, client_id=None,
-                 dry_run=False, continuation=None):
+                 dry_run=False, continuation=None, exec_latency=False):
         '''
         Issues a new request to execute the DAG. Returns a CloudburstFuture that
 

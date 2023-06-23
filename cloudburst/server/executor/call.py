@@ -260,6 +260,8 @@ def _resolve_ref_causal(refs, user_states_kvs, schedule, key_version_locations,
 
 def exec_dag_function(pusher_cache, kvs, user_states_kvs, trigger_sets, function, schedules,
                       user_library, dag_runtimes, cache, schedulers, batching, arbiter=None):
+    if arbiter:
+        arbiter.exec_start()
     if schedules[0].consistency == NORMAL:
         finished, successes = _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs,
                                                         trigger_sets, function,
@@ -375,8 +377,12 @@ def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, 
                                  (schedule.dag.name, trigger.id))
                     # WARNING: Only changed in normal, not in causal
                     if schedule.output_key:
-                        # Send back result with specified key, to identify client
-                        sckt.send(serializer.dump([schedule.output_key, result]))
+                        if schedule.output_key == sutils.OUTPUT_KEY_EXEC_LATENCY and arbiter:
+                            # Send back latency
+                            sckt.send(serializer.dump([arbiter.exec_end(), result]))
+                        else:
+                            # Send back result with specified key, to identify client
+                            sckt.send(serializer.dump([schedule.output_key, result]))
                     else:
                         sckt.send(serializer.dump(result))
         else:
