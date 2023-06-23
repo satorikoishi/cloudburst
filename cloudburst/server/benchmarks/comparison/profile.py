@@ -15,7 +15,7 @@ dag_name = 'profile'
 
 # 100000 lists, out of 100000 numbers
 KEY_MAX = 1000000
-HOT_KEY  = 0
+HOT_KEY  = '0'
 VALUE = 1
 
 def generate_dataset(cloudburst_client, client_name):
@@ -38,7 +38,7 @@ def create_dag(cloudburst_client):
                 value = cloudburst.get(str(start_key), client_name=client_name)
             return value
         else:
-            for key in range(start_key, start_key + access_count):
+            for key in range(int(start_key), int(start_key) + access_count):
                 value = cloudburst.get(str(key), client_name=client_name)
             return value
 
