@@ -39,7 +39,8 @@ from cloudburst.server.benchmarks.comparison import (
     social_network,
     split,
     no_op,
-    profile
+    profile,
+    profile_executor
 )
 import cloudburst.server.utils as sutils
 
@@ -126,6 +127,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'profile':
         total, scheduler, kvs, retries = profile.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'profile_executor':
+        total, scheduler, kvs, retries = profile_executor.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
