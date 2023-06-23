@@ -80,7 +80,6 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_req_count = 0
     epoch_latencies = []
 
-    epoch_start = time.time()
     epoch = 0
     
     # TODO: get executor profile...
@@ -96,23 +95,17 @@ def run(cloudburst_client, num_requests, sckt, args):
         
         total_time += [end - start]
         epoch_latencies += [end - start]
-
-        epoch_end = time.time()
-        if (epoch_end - epoch_start) > 10:
-            if sckt:
-                sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
-            utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
-                                        (epoch), True, bname='profile', args=args, csv_filename='benchmark_lat.csv')
-            epoch += 1
-            
-            epoch_req_count = 0
-            epoch_latencies.clear()
-            epoch_start = time.time()
         
         if not hot:
             # Update start key for every request, to disable cache
             start_key = str(int(start_key) + access_count)
     
+    # Always sends back latency, no matter epoch duration
+    if sckt:
+        sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
+    utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
+                                (epoch), True, bname='profile', args=args, csv_filename='benchmark_lat.csv')
+            
     logging.info(f'start key: {start_key}, hot: {hot}, access count: {access_count}, num request: {num_requests}')
 
     return total_time, [], [], 0
