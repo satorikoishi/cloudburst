@@ -26,7 +26,7 @@ def generate_dataset(cloudburst_client, client_name):
         if key % 1000 == 0:
             logging.info(f'Generating key: {key} for client: {client_name}')
     
-    logging.info('Finished generating dataset for client {client_name}')
+    logging.info(f'Finished generating dataset for client {client_name}')
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
