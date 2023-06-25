@@ -58,7 +58,7 @@ def run(cloudburst_client, num_requests, sckt, args):
         
         total_time += [end - start]
         epoch_latencies += [end - start]
-        exec_epoch_latencies += exec_lat
+        exec_epoch_latencies += [exec_lat]
 
         epoch_end = time.time()
         if (epoch_end - epoch_start) > 10:
