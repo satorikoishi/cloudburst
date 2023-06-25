@@ -59,9 +59,9 @@ def run(cloudburst_client, num_requests, sckt, args):
         epoch_latencies += [end - start]
         exec_epoch_latencies += [exec_lat]
         
-        if sckt:
-            sckt.send(cp.dumps((epoch_req_count, epoch_latencies, exec_epoch_latencies)))
-        utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
-                                    (epoch), True, bname=f'{dag_name}', args=args, csv_filename='benchmark_lat.csv') 
+    if sckt:
+        sckt.send(cp.dumps((epoch_req_count, epoch_latencies, exec_epoch_latencies)))
+    utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
+                                (epoch), True, bname=f'{dag_name}', args=args, csv_filename='benchmark_lat.csv') 
 
     return total_time, [], [], 0
