@@ -37,6 +37,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     total_time = []
     epoch_req_count = 0
     epoch_latencies = []
+    exec_epoch_latencies = []
 
     epoch_start = time.time()
     epoch = 0
@@ -45,19 +46,24 @@ def run(cloudburst_client, num_requests, sckt, args):
         arg_map = {dag_name: []}
         
         start = time.time()
-        res = cloudburst_client.call_dag(dag_name, arg_map, True)
+        res = cloudburst_client.call_dag(dag_name, arg_map, True, exec_latency=True)
         end = time.time()
 
-        if res is not None:
-            epoch_req_count += 1
+        if not res:
+            continue
+        
+        exec_lat, _ = res
+        
+        epoch_req_count += 1
         
         total_time += [end - start]
         epoch_latencies += [end - start]
+        exec_epoch_latencies += exec_lat
 
         epoch_end = time.time()
         if (epoch_end - epoch_start) > 10:
             if sckt:
-                sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
+                sckt.send(cp.dumps((epoch_req_count, epoch_latencies, exec_epoch_latencies)))
             utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
                                         (epoch), True, bname=f'{dag_name}', args=args, csv_filename='benchmark_lat.csv')
 
