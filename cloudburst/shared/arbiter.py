@@ -5,6 +5,10 @@ import logging
 import time
 
 DEPENDENT_ACCESS_THRESHOLD = 3
+ROLLBACK_IDENTIFIER = "UnknownArg"
+COMPARE_EXEC_COUNT = 10
+ANNA_CLIENT_NAME = 'anna'
+SHREDDER_CLIENT_NAME = 'shredder'
 
 def check_args(node):
     args = []
@@ -40,7 +44,7 @@ def check_loop(node, args=[]):
                         if range_arg0.id in args:
                             return range_arg0.id
                         else:
-                            return "UnknownArg"
+                            return ROLLBACK_IDENTIFIER
     return ""
 
 def get_func_args(func_ast):
@@ -81,12 +85,22 @@ def generate_RPN_str(node, args=[]):
 class Arbiter:
     ## Assume only one function pinned to executor
     def __init__(self):
+        # Func meta
         self.func = None
         self.func_name = None
         self.func_ast = None
         self.func_args = None
         self.RPN_str = None
+        # Profile
         self.exec_start_time = time.time()  ## There's no parallel execution
+        self.latencies = []
+        # Rollback case
+        self.rollback_flag = False
+        self.compare_latencies = { ANNA_CLIENT_NAME: [], SHREDDER_CLIENT_NAME: [] }
+        self.compare_decision = None
+    
+    def clear_compare(self):
+        return NotImplementedError
 
     def bind_func(self, func, func_name):
         logging.info(f'binding func {func_name}')
@@ -95,13 +109,29 @@ class Arbiter:
         self.func_ast = ast.parse(textwrap.dedent(inspect.getsource(func)))
         self.func_args = get_func_args(self.func_ast)
         self.RPN_str = generate_RPN_str(self.func_ast, self.func_args)
+        if ROLLBACK_IDENTIFIER in self.RPN_str:
+            # Cannot analyze args, rollback: run both sides then compare
+            self.rollback_flag = True
         logging.info(f'ARG: {self.func_args}, RPN_str: {self.RPN_str}')
+        
+    def current_compare_client(self):
+        if len(self.compare_latencies[ANNA_CLIENT_NAME]) < COMPARE_EXEC_COUNT:
+            return ANNA_CLIENT_NAME
+        elif len(self.compare_latencies[SHREDDER_CLIENT_NAME]) < COMPARE_EXEC_COUNT:
+            return SHREDDER_CLIENT_NAME
+        else:
+            return None
         
     def exec_start(self):
         self.exec_start_time = time.time()
     
     def exec_end(self):
-        return time.time() - self.exec_start_time
+        elapsed = time.time() - self.exec_start_time
+        if self.rollback_flag and not self.compare_decision:
+            self.compare_latencies[self.current_compare_client()].append(elapsed)
+        else:
+            self.latencies.append(elapsed)
+        return elapsed
 
     def calc(self, arg_map):
         RPN_list = self.RPN_str.split()
@@ -121,8 +151,12 @@ class Arbiter:
                 ## const num
                 stack.append(int(elem))
             else:
-                ## variable
-                stack.append(int(arg_map[elem]))
+                if elem in arg_map.keys():
+                    ## variable
+                    stack.append(int(arg_map[elem]))
+                else:
+                    ## UnknownArg
+                    return None
         assert(len(stack) == 1)
         return stack.pop()
     
@@ -134,19 +168,46 @@ class Arbiter:
         
         assert len(args) == len(self.func_args) + 1, f'Final_arg len: {len(args)}, Func_arg len: {len(self.func_args)}'
         
-        arg_map = {}
-        for arg_i, arg in enumerate(self.func_args):
-            arg_map[arg] = args[arg_i + 1]
-        
-        dependent_access_times = self.calc(arg_map)
-        
-        final_args = args[:-1]
-        if dependent_access_times > DEPENDENT_ACCESS_THRESHOLD:
-            final_args += ('shredder',)
+        if self.rollback_flag:
+            # Rollback case
+            client_arg = self.rollback_compare()
         else:
-            final_args += ('anna',)
+            # Normal case
+            arg_map = {}
+            for arg_i, arg in enumerate(self.func_args):
+                arg_map[arg] = args[arg_i + 1]
+            
+            dependent_access_times = self.calc(arg_map)
+            if dependent_access_times > DEPENDENT_ACCESS_THRESHOLD:
+                client_arg = SHREDDER_CLIENT_NAME
+            else:
+                client_arg = ANNA_CLIENT_NAME
+        
+        # Choose the better client
+        final_args = args[:-1]
+        final_args += (client_arg, )
         
         logging.info(f'Dependent access: {dependent_access_times}, choose: {final_args[-1]}')
         logging.info(f'Args: {args}, Final_args: {final_args}')
         
         return final_args
+    
+    def rollback_compare(self):
+        if self.compare_decision:
+            return self.compare_decision
+        
+        cur_client = self.current_compare_client()
+        if cur_client:
+            return cur_client
+        else:
+            # We collected enough latencies for comparison
+            return self.compare_choose_client()
+    
+    def compare_choose_client(self):
+        # Choose lower median latency
+        anna_median = self.compare_latencies[ANNA_CLIENT_NAME][len(self.compare_latencies[ANNA_CLIENT_NAME]) / 2]
+        shredder_median = self.compare_latencies[SHREDDER_CLIENT_NAME][len(self.compare_latencies[SHREDDER_CLIENT_NAME]) / 2]
+        if anna_median < shredder_median:
+            return ANNA_CLIENT_NAME
+        else:
+            return SHREDDER_CLIENT_NAME
