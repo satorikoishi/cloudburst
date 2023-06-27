@@ -357,6 +357,8 @@ def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, 
                 sckt.send(new_trigger.SerializeToString())
 
     if is_sink:
+        if arbiter:
+            exec_lat = arbiter.exec_end()
         if schedule.continuation.name:
             for idx, pair in enumerate(zip(schedules, result_list)):
                 schedule, result = pair
@@ -380,7 +382,7 @@ def _exec_dag_function_normal(pusher_cache, kvs, user_states_kvs, trigger_sets, 
                     if schedule.output_key:
                         if schedule.output_key == OUTPUT_KEY_EXEC_LATENCY and arbiter:
                             # Send back latency
-                            sckt.send(serializer.dump([arbiter.exec_end(), result]))
+                            sckt.send(serializer.dump([exec_lat, result]))
                         else:
                             # Send back result with specified key, to identify client
                             sckt.send(serializer.dump([schedule.output_key, result]))
