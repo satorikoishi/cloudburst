@@ -3,8 +3,8 @@ import inspect
 import textwrap
 import logging
 import time
-import ast_analyzer
-from ast_analyzer import ROLLBACK_IDENTIFIER
+import cloudburst.shared.ast_analyzer as ast_analyzer
+from cloudburst.shared.ast_analyzer import ROLLBACK_IDENTIFIER
 
 DEPENDENT_ACCESS_THRESHOLD = 3
 COMPARE_EXEC_COUNT = 10
