@@ -105,7 +105,7 @@ class Arbiter:
         else:
             # We collected enough latencies for comparison
             self.compare_decision = self.compare_choose_client()
-            logging.info('Rollback made decision: {self.compare_decision}')
+            logging.info(f'Rollback made decision: {self.compare_decision}')
             return self.compare_decision
     
     def compare_choose_client(self):
