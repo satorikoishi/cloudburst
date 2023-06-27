@@ -110,8 +110,8 @@ class Arbiter:
     
     def compare_choose_client(self):
         # Choose lower median latency
-        anna_median = self.compare_latencies[ANNA_CLIENT_NAME][len(self.compare_latencies[ANNA_CLIENT_NAME]) / 2]
-        shredder_median = self.compare_latencies[SHREDDER_CLIENT_NAME][len(self.compare_latencies[SHREDDER_CLIENT_NAME]) / 2]
+        anna_median = self.compare_latencies[ANNA_CLIENT_NAME][len(self.compare_latencies[ANNA_CLIENT_NAME]) // 2]
+        shredder_median = self.compare_latencies[SHREDDER_CLIENT_NAME][len(self.compare_latencies[SHREDDER_CLIENT_NAME]) // 2]
         if anna_median < shredder_median:
             return ANNA_CLIENT_NAME
         else:
