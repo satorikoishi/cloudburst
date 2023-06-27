@@ -85,13 +85,13 @@ class Arbiter:
                 client_arg = SHREDDER_CLIENT_NAME
             else:
                 client_arg = ANNA_CLIENT_NAME
-        
+            logging.info(f'Dependent access: {dependent_access_times}')
+
         # Choose the better client
         final_args = args[:-1]
         final_args += (client_arg, )
         
-        logging.info(f'Dependent access: {dependent_access_times}, choose: {final_args[-1]}')
-        logging.info(f'Args: {args}, Final_args: {final_args}')
+        logging.info(f'Client choose: {client_arg}')
         
         return final_args
     
@@ -104,7 +104,9 @@ class Arbiter:
             return cur_client
         else:
             # We collected enough latencies for comparison
-            return self.compare_choose_client()
+            self.compare_decision = self.compare_choose_client()
+            logging.info('Rollback made decision: {self.compare_decision}')
+            return self.compare_decision
     
     def compare_choose_client(self):
         # Choose lower median latency
