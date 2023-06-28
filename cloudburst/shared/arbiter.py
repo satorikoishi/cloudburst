@@ -16,10 +16,10 @@ EXPECTATION_UPPER_BOUND = 2
 EXPECTATION_FAIL_THRESHOLD = 0.1
 # Evaluation results from profiling, only consider cache case for anna
 def calc_anna_expectation(dependent_access_times):
-    return 0.6 + dependent_access_times * 0.2
+    return 0.0006 + dependent_access_times * 0.0002
 
 def calc_shredder_expectation():
-    return 1
+    return 0.001
 
 class Arbiter:
     ## Assume only one function pinned to executor
