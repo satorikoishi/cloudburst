@@ -147,10 +147,9 @@ class Arbiter:
         self.feedback_exec_times += 1
         if elapsed > EXPECTATION_UPPER_BOUND * self.expectation:
             self.expect_fail_count += 1
-            logging.info('Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
+            logging.info(f'Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
         if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
-            logging.info(f'Feedback summary. Exec times: \
-                         {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
+            logging.info(f'Feedback summary. Exec times: {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
             # Feedback verification
             if self.expect_fail_count > EXPECTATION_FAIL_THRESHOLD * FEEDBACK_EXEC_COUNT:
                 # Failed, recalculate expectation and compare? Should we calc all latencies?
