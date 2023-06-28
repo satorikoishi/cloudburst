@@ -60,6 +60,9 @@ def run(cloudburst_client, num_requests, sckt, args):
         
     if args[0] == 'create':
         # Create dataset and DAG
+        if len(args) > 1:
+            global KEY_MAX
+            KEY_MAX = int(args[1])
         generate_dataset(cloudburst_client, DEFAULT_CLIENT_NAME)
         generate_dataset(cloudburst_client, 'shredder')
         create_dag(cloudburst_client)
