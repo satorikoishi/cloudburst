@@ -8,8 +8,18 @@ from cloudburst.shared.ast_analyzer import ROLLBACK_IDENTIFIER
 
 DEPENDENT_ACCESS_THRESHOLD = 3
 COMPARE_EXEC_COUNT = 10
+FEEDBACK_EXEC_COUNT = 1000
 ANNA_CLIENT_NAME = 'anna'
 SHREDDER_CLIENT_NAME = 'shredder'
+
+EXPECTATION_UPPER_BOUND = 2
+EXPECTATION_FAIL_THRESHOLD = 0.1
+# Evaluation results from profiling, only consider cache case for anna
+def calc_anna_expectation(dependent_access_times):
+    return 0.6 + dependent_access_times * 0.2
+
+def calc_shredder_expectation():
+    return 1
 
 class Arbiter:
     ## Assume only one function pinned to executor
@@ -22,7 +32,9 @@ class Arbiter:
         self.RPN_str = None
         # Profile
         self.exec_start_time = time.time()  ## There's no parallel execution
-        self.latencies = []
+        self.expect_fail_count = 0
+        self.feedback_exec_times = 0
+        self.expectation = None
         # Rollback case
         self.rollback_flag = False
         self.compare_latencies = { ANNA_CLIENT_NAME: [], SHREDDER_CLIENT_NAME: [] }
@@ -30,6 +42,10 @@ class Arbiter:
     
     def clear_compare(self):
         return NotImplementedError
+
+    def clear_feedback(self):
+        self.feedback_exec_times = 0
+        self.expect_fail_count = 0
 
     def bind_func(self, func, func_name):
         logging.info(f'binding func {func_name}')
@@ -57,12 +73,10 @@ class Arbiter:
     
     def exec_end(self):
         elapsed = time.time() - self.exec_start_time
-        if self.rollback_flag and not self.compare_decision:
-            self.compare_latencies[self.current_compare_client()].append(elapsed)
-        else:
-            self.latencies.append(elapsed)
+        self.feedback(elapsed)
         return elapsed
     
+    # According to args, choose client & calc expectation
     def process_args(self, args):
         client_name = args[-1]
         if not isinstance(client_name, str) or client_name != 'arbiter':
@@ -73,7 +87,7 @@ class Arbiter:
         
         if self.rollback_flag:
             # Rollback case
-            client_arg = self.rollback_compare()
+            client_arg, expectation = self.rollback_compare()
         else:
             # Normal case
             arg_map = {}
@@ -83,36 +97,61 @@ class Arbiter:
             dependent_access_times = ast_analyzer.calc(self.RPN_str, arg_map)
             if dependent_access_times > DEPENDENT_ACCESS_THRESHOLD:
                 client_arg = SHREDDER_CLIENT_NAME
+                expectation = calc_shredder_expectation()
             else:
                 client_arg = ANNA_CLIENT_NAME
+                expectation = calc_anna_expectation(dependent_access_times)
             logging.info(f'Dependent access: {dependent_access_times}')
 
         # Choose the better client
         final_args = args[:-1]
         final_args += (client_arg, )
         
-        logging.info(f'Client choose: {client_arg}')
+        # Expectation
+        self.expectation = expectation
+        
+        logging.info(f'Client choose: {client_arg}, Expectation: {self.expectation}')
         
         return final_args
     
     def rollback_compare(self):
         if self.compare_decision:
-            return self.compare_decision
+            return self.compare_decision, self.expectation
         
         cur_client = self.current_compare_client()
         if cur_client:
-            return cur_client
+            return cur_client, None
         else:
             # We collected enough latencies for comparison
-            self.compare_decision = self.compare_choose_client()
-            logging.info(f'Rollback made decision: {self.compare_decision}')
-            return self.compare_decision
+            self.compare_decision, expectation = self.compare_choose_client()
+            logging.info(f'Rollback made decision: {self.compare_decision}, expectation: {expectation}')
+            return self.compare_decision, expectation
     
     def compare_choose_client(self):
         # Choose lower median latency
         anna_median = self.compare_latencies[ANNA_CLIENT_NAME][len(self.compare_latencies[ANNA_CLIENT_NAME]) // 2]
         shredder_median = self.compare_latencies[SHREDDER_CLIENT_NAME][len(self.compare_latencies[SHREDDER_CLIENT_NAME]) // 2]
         if anna_median < shredder_median:
-            return ANNA_CLIENT_NAME
+            return ANNA_CLIENT_NAME, anna_median
         else:
-            return SHREDDER_CLIENT_NAME
+            return SHREDDER_CLIENT_NAME, shredder_median
+    
+    def feedback(self, elapsed):
+        if self.rollback_flag and not self.compare_decision:
+            # Rollback comparing
+            self.compare_latencies[self.current_compare_client()].append(elapsed)
+            return
+        
+        # Normal case, we already has expectation for every execution
+        self.feedback_exec_times += 1
+        if elapsed > EXPECTATION_UPPER_BOUND * self.expectation:
+            self.expect_fail_count += 1
+        if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
+            # Feedback verification
+            if self.expect_fail_count > EXPECTATION_FAIL_THRESHOLD * FEEDBACK_EXEC_COUNT:
+                # Failed, recalculate expectation and compare? Should we calc all latencies?
+                return NotImplementedError
+            
+            self.clear_feedback()
+
+        return
