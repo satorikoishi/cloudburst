@@ -83,7 +83,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_req_count = 0
     epoch_latencies = []
 
-    epoch = 0
+    # epoch = 0
     
     for _ in range(num_requests):
         arg_map = {dag_name: [start_key, access_count, hot, client_name]}
@@ -109,8 +109,8 @@ def run(cloudburst_client, num_requests, sckt, args):
     # Always sends back latency, no matter epoch duration
     if sckt:
         sckt.send(cp.dumps((epoch_req_count, epoch_latencies)))
-    utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
-                                (epoch), True, bname='profile', args=args, csv_filename='benchmark_lat.csv')
+    # utils.print_latency_stats(epoch_latencies, 'EPOCH %d E2E' %
+    #                             (epoch), True, bname='profile', args=args, csv_filename='benchmark_lat.csv')
             
     logging.info(f'start key: {start_key}, hot: {hot}, access count: {access_count}, num request: {num_requests}')
 
