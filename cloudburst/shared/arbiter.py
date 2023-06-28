@@ -73,7 +73,8 @@ class Arbiter:
     
     def exec_end(self):
         elapsed = time.time() - self.exec_start_time
-        self.feedback(elapsed)
+        if self.expectation:
+            self.feedback(elapsed)
         return elapsed
     
     # According to args, choose client & calc expectation
@@ -120,7 +121,7 @@ class Arbiter:
         
         cur_client = self.current_compare_client()
         if cur_client:
-            return cur_client, None
+            return cur_client, -1
         else:
             # We collected enough latencies for comparison
             self.compare_decision, expectation = self.compare_choose_client()
@@ -146,7 +147,10 @@ class Arbiter:
         self.feedback_exec_times += 1
         if elapsed > EXPECTATION_UPPER_BOUND * self.expectation:
             self.expect_fail_count += 1
+            logging.info('Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
         if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
+            logging.info(f'Feedback summary. Exec times: \
+                         {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
             # Feedback verification
             if self.expect_fail_count > EXPECTATION_FAIL_THRESHOLD * FEEDBACK_EXEC_COUNT:
                 # Failed, recalculate expectation and compare? Should we calc all latencies?
