@@ -14,7 +14,7 @@ from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 dag_name = 'k_hop'
 rpc_fun_name = 'count_friend_list'
 
-UPPER_BOUND = 100000
+UPPER_BOUND = 1000
 
 # def gen_userid(id):
 #     return f'{dag_name}{id}'
