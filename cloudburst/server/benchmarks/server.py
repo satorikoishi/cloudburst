@@ -40,7 +40,8 @@ from cloudburst.server.benchmarks.comparison import (
     split,
     no_op,
     profile,
-    profile_executor
+    profile_executor,
+    compute_emulate
 )
 import cloudburst.server.utils as sutils
 
@@ -130,6 +131,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'profile_executor':
         total, scheduler, kvs, retries = profile_executor.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'compute_emulate':
+        total, scheduler, kvs, retries = compute_emulate.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
