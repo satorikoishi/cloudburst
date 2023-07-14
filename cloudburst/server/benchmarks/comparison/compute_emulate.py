@@ -23,7 +23,7 @@ def generate_dataset(cloudburst_client, client_name):
 
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
-    def compute_emulate(cloudburst, key, compute_duration, client_name=DEFAULT_CLIENT_NAME):
+    def compute_emulate(cloudburst, key, access_count, compute_duration, client_name=DEFAULT_CLIENT_NAME):
         if client_name == "shredder":
             value = cloudburst.execute_js_fun(dag_name, key, compute_duration, client_name=client_name)
         else:
@@ -33,7 +33,8 @@ def create_dag(cloudburst_client):
             while now < end:
                 now = time.time()
             
-            value = cloudburst.get(str(key), client_name=client_name)
+            for i in range(access_count):
+                value = cloudburst.get(str(key), client_name=client_name)
         return value
 
     cloud_compute_emulate = cloudburst_client.register(compute_emulate, dag_name)
@@ -47,8 +48,8 @@ def create_dag(cloudburst_client):
     utils.register_dag_for_single_func(cloudburst_client, dag_name)    
 
 def run(cloudburst_client, num_requests, sckt, args):
-    if len(args) < 1 and args[0] != 'create':
-        print(f"{args} too short. Args: duration")
+    if len(args) < 3 and args[0] != 'create':
+        print(f"{args} too short. Args: client_name, access_count, duration")
         sys.exit(1)
         
     if args[0] == 'create':
@@ -60,7 +61,9 @@ def run(cloudburst_client, num_requests, sckt, args):
     logging.info(f'Running {dag_name}, num_requests: {num_requests}')
     
     key = '1'
-    compute_duration = int(args[0]) # us
+    client_name = args[0]
+    access_count = args[1]
+    compute_duration = int(args[2]) # us
 
     total_time = []
     epoch_req_count = 0
@@ -68,7 +71,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     exec_epoch_latencies = []
 
     for _ in range(num_requests):
-        arg_map = {dag_name: [key, compute_duration]}
+        arg_map = {dag_name: [key, access_count, compute_duration, client_name]}
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map, True, exec_latency=True)
