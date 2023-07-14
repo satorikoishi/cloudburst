@@ -25,7 +25,7 @@ def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
     def compute_emulate(cloudburst, key, access_count, compute_duration, client_name=DEFAULT_CLIENT_NAME):
         if client_name == "shredder":
-            value = cloudburst.execute_js_fun(dag_name, key, compute_duration, client_name=client_name)
+            value = cloudburst.execute_js_fun(dag_name, key, access_count, compute_duration, client_name=client_name)
         else:
             # precised sleep
             now = time.time()
@@ -62,7 +62,7 @@ def run(cloudburst_client, num_requests, sckt, args):
     
     key = '1'
     client_name = args[0]
-    access_count = args[1]
+    access_count = int(args[1])
     compute_duration = int(args[2]) # us
 
     total_time = []
