@@ -24,6 +24,7 @@ def generate_dataset(cloudburst_client, client_name):
 def create_dag(cloudburst_client):
     ''' REGISTER FUNCTIONS '''
     def compute_emulate(cloudburst, key, access_count, compute_duration, client_name=DEFAULT_CLIENT_NAME):
+        value = None
         if client_name == "shredder":
             value = cloudburst.execute_js_fun(dag_name, key, access_count, compute_duration, client_name=client_name)
         else:
