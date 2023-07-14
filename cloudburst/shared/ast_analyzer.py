@@ -1,6 +1,6 @@
 import ast
 
-ROLLBACK_IDENTIFIER = 'ROLLBACK'
+FALLBACK_IDENTIFIER = 'FALLBACK'
 ACCESS_FUNC_NAME = 'cloudburst'
 SELF_FUNC_NAME = ""    
 
@@ -31,7 +31,7 @@ def check_call(node, args=[]):
         elif isinstance(node.func, ast.Name):
             # Check recursive call
             if node.func.id == SELF_FUNC_NAME:
-                return ROLLBACK_IDENTIFIER
+                return FALLBACK_IDENTIFIER
     
     return ""
 
@@ -52,7 +52,7 @@ def check_loop(node, args=[]):
                         if range_arg0.id in args:
                             return range_arg0.id
                         else:
-                            return ROLLBACK_IDENTIFIER
+                            return FALLBACK_IDENTIFIER
     return ""
 
 def get_funcdef_name(func_ast):

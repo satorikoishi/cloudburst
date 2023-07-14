@@ -4,7 +4,7 @@ import textwrap
 import logging
 import time
 import cloudburst.shared.ast_analyzer as ast_analyzer
-from cloudburst.shared.ast_analyzer import ROLLBACK_IDENTIFIER
+from cloudburst.shared.ast_analyzer import FALLBACK_IDENTIFIER
 
 DEPENDENT_ACCESS_THRESHOLD = 3
 COMPARE_EXEC_COUNT = 10
@@ -35,8 +35,8 @@ class Arbiter:
         self.expect_fail_count = 0
         self.feedback_exec_times = 0
         self.expectation = None
-        # Rollback case
-        self.rollback_flag = False
+        # Fallback case
+        self.fallback_flag = False
         self.compare_latencies = { ANNA_CLIENT_NAME: [], SHREDDER_CLIENT_NAME: [] }
         self.compare_decision = None
     
@@ -55,9 +55,9 @@ class Arbiter:
         self.func_args = ast_analyzer.get_func_args(self.func_ast)
         ast_analyzer.get_funcdef_name(self.func_ast)
         self.RPN_str = ast_analyzer.generate_RPN_str(self.func_ast, self.func_args)
-        if ROLLBACK_IDENTIFIER in self.RPN_str:
-            # Cannot analyze args, rollback: run both sides then compare
-            self.rollback_flag = True
+        if FALLBACK_IDENTIFIER in self.RPN_str:
+            # Cannot analyze args, fallback: run both sides then compare
+            self.fallback_flag = True
         logging.info(f'ARG: {self.func_args}, RPN_str: {self.RPN_str}')
         
     def current_compare_client(self):
@@ -86,9 +86,9 @@ class Arbiter:
         
         assert len(args) == len(self.func_args) + 1, f'Final_arg len: {len(args)}, Func_arg len: {len(self.func_args)}'
         
-        if self.rollback_flag:
-            # Rollback case
-            client_arg, expectation = self.rollback_compare()
+        if self.fallback_flag:
+            # Fallback case
+            client_arg, expectation = self.fallback_compare()
         else:
             # Normal case
             arg_map = {}
@@ -115,7 +115,7 @@ class Arbiter:
         
         return final_args
     
-    def rollback_compare(self):
+    def fallback_compare(self):
         if self.compare_decision:
             return self.compare_decision, self.expectation
         
@@ -125,7 +125,7 @@ class Arbiter:
         else:
             # We collected enough latencies for comparison
             self.compare_decision, expectation = self.compare_choose_client()
-            logging.info(f'Rollback made decision: {self.compare_decision}, expectation: {expectation}')
+            logging.info(f'Fallback made decision: {self.compare_decision}, expectation: {expectation}')
             return self.compare_decision, expectation
     
     def compare_choose_client(self):
@@ -138,8 +138,8 @@ class Arbiter:
             return SHREDDER_CLIENT_NAME, shredder_median
     
     def feedback(self, elapsed):
-        if self.rollback_flag and not self.compare_decision:
-            # Rollback comparing
+        if self.fallback_flag and not self.compare_decision:
+            # Fallback comparing
             self.compare_latencies[self.current_compare_client()].append(elapsed)
             return
         
