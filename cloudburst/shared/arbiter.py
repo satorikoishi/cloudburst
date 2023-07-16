@@ -40,8 +40,11 @@ class Arbiter:
         self.compare_latencies = { ANNA_CLIENT_NAME: [], SHREDDER_CLIENT_NAME: [] }
         self.compare_decision = None
     
-    def clear_compare(self):
-        return NotImplementedError
+    def reset_fallback(self):
+        self.fallback_flag = True
+        self.compare_decision = None
+        self.expectation = -1
+        self.compare_latencies = { ANNA_CLIENT_NAME: [], SHREDDER_CLIENT_NAME: [] }
 
     def clear_feedback(self):
         self.feedback_exec_times = 0
@@ -148,13 +151,15 @@ class Arbiter:
         if elapsed > EXPECTATION_UPPER_BOUND * self.expectation:
             self.expect_fail_count += 1
             logging.info(f'Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
-        if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
-            logging.info(f'Feedback summary. Exec times: {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
             # Feedback verification
             if self.expect_fail_count > EXPECTATION_FAIL_THRESHOLD * FEEDBACK_EXEC_COUNT:
-                # Failed, recalculate expectation and compare? Should we calc all latencies?
-                return NotImplementedError
-            
+                self.clear_feedback()
+                # Return to fallback case
+                logging.info(f'TOO MANY beyond expectation, return to fallback case, fail count: {self.expect_fail_count}')
+                self.reset_fallback()
+                
+        if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
+            logging.info(f'Feedback summary. Exec times: {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
             self.clear_feedback()
 
         return
