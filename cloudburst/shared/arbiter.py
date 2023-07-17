@@ -13,7 +13,7 @@ ANNA_CLIENT_NAME = 'anna'
 SHREDDER_CLIENT_NAME = 'shredder'
 
 EXPECTATION_UPPER_BOUND = 2
-EXPECTATION_FAIL_THRESHOLD = 0.1
+EXPECTATION_FAIL_THRESHOLD = 0.02
 # Evaluation results from profiling, only consider cache case for anna
 def calc_anna_expectation(dependent_access_times):
     return 0.0006 + dependent_access_times * 0.0002
@@ -161,8 +161,8 @@ class Arbiter:
         if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
             logging.info(f'Feedback summary. Exec times: {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
             self.clear_feedback()
-            if self.fallback_flag and self.compare_decision == ANNA_CLIENT_NAME:
-                # Test if storage load is still heavy
+            if self.fallback_flag:
+                # Test if storage load is still heavy, or args changed
                 self.reset_fallback()
 
         return
