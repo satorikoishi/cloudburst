@@ -110,8 +110,10 @@ while end_recv < sent_msgs:
             logging.info('\tTHROUGHPUT: %.2f' % (thruput))
             logging.info('\tELAPSED: %.2f' % (elapsed))
             utils.print_latency_stats(epoch_total, f'E2E EPOCH {epoch}', True, bname=bname, args=args, csv_filename='latency.csv', num_clients=num_clients)
+            utils.print_detailed_latency(epoch_total, csv_filename='detailed_latency.csv')
             if len(exec_epoch_total) > 0:
                 utils.print_latency_stats(exec_epoch_total, f'EXEC EPOCH {epoch}', True, bname=bname, args=args, csv_filename='exec_latency.csv', num_clients=num_clients)
+                utils.print_detailed_latency(exec_epoch_total, csv_filename='exec_detailed_latency.csv')
             utils.log_throughput_to_csv(epoch, thruput, bname=bname, num_clients=num_clients, args=args, duration=elapsed, csv_filename='throughput.csv')
 
             epoch_recv = 0

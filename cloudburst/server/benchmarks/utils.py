@@ -83,6 +83,14 @@ class ClientMeta():
 
 unit_dict = {'s': 1, 'ms': 1000, 'us': 1000000}
 
+def print_detailed_latency(data, unit='ms', csv_filename=None):
+    # Print all latencies
+    data = [x * unit_dict[unit] for x in data]
+    if csv_filename:
+        with open(csv_filename, 'a', newline='') as csv_file:
+            writer = csv.writer(csv_file)
+            writer.writerow(data)
+
 def print_latency_stats(data, ident, log=False, epoch=0, unit='ms', bname=None, args=[], csv_filename=None, num_clients=1):
     # Amplify according to unit
     data = [x * unit_dict[unit] for x in data]
