@@ -153,13 +153,16 @@ class Arbiter:
             logging.info(f'Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
             # Feedback verification
             if self.expect_fail_count > EXPECTATION_FAIL_THRESHOLD * FEEDBACK_EXEC_COUNT:
-                self.clear_feedback()
                 # Return to fallback case
                 logging.info(f'TOO MANY beyond expectation, return to fallback case, fail count: {self.expect_fail_count}')
+                self.clear_feedback()
                 self.reset_fallback()
                 
         if self.feedback_exec_times >= FEEDBACK_EXEC_COUNT:
             logging.info(f'Feedback summary. Exec times: {self.feedback_exec_times}, fail count: {self.expect_fail_count}')
             self.clear_feedback()
+            if self.fallback_flag and self.compare_decision == ANNA_CLIENT_NAME:
+                # Test if storage load is still heavy
+                self.reset_fallback()
 
         return
