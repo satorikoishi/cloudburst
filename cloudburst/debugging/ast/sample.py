@@ -134,6 +134,7 @@ def list_traversal(cloudburst, nodeid, depth, client_name):
     nodeid += cloudburst.get(nodeid);
     for i in range(depth):
         pass
+    cloudburst.execute_js_fun(nodeid)
     
     return nodeid
 

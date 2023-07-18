@@ -2,6 +2,7 @@ import ast
 
 FALLBACK_IDENTIFIER = 'FALLBACK'
 ACCESS_FUNC_NAME = 'cloudburst'
+IGNORE_RPC_ATTR = 'execute_js_fun'
 SELF_FUNC_NAME = ""    
 
 def check_funcdef_name(node):
@@ -25,7 +26,7 @@ def check_call(node, args=[]):
         if isinstance(node.func, ast.Attribute):
             if isinstance(node.func.value, ast.Name):
                 # Check access call
-                if node.func.value.id == ACCESS_FUNC_NAME:
+                if node.func.value.id == ACCESS_FUNC_NAME and node.func.attr != 'execute_js_fun':
                     # print(f'node: {type(node).__name__:{16}}, fields: {list(ast.iter_fields(node))}')
                     return "1"
         elif isinstance(node.func, ast.Name):
