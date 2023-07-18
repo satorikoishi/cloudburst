@@ -41,7 +41,8 @@ from cloudburst.server.benchmarks.comparison import (
     no_op,
     profile,
     profile_executor,
-    compute_emulate
+    compute_emulate,
+    facebook_social
 )
 import cloudburst.server.utils as sutils
 
@@ -134,6 +135,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'compute_emulate':
         total, scheduler, kvs, retries = compute_emulate.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'facebook_social':
+        total, scheduler, kvs, retries = facebook_social.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
