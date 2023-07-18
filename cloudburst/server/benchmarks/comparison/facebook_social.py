@@ -24,6 +24,7 @@ def generate_dataset(cloudburst_client, client_name):
         for line in f.readlines():
             k, v = line.split()
             if int(k) > int(cur_k):
+                logging.info(f'Put kv pair, {cur_k}, {cur_v}')
                 cloudburst_client.put_object(cur_k, cur_v, client_name=client_name)
                 cur_k = k
                 cur_v = []
