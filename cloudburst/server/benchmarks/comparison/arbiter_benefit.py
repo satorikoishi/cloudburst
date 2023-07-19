@@ -79,6 +79,7 @@ def run(cloudburst_client, num_requests, sckt, args):
             access_count = 1
             
         arg_map = {dag_name: [key, access_count, compute_duration, client_name]}
+        print(arg_map)
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map, True, exec_latency=True)

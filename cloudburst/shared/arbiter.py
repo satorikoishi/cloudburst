@@ -13,7 +13,7 @@ ANNA_CLIENT_NAME = 'anna'
 SHREDDER_CLIENT_NAME = 'shredder'
 
 EXPECTATION_UPPER_BOUND = 2
-EXPECTATION_FAIL_THRESHOLD = 0.02
+EXPECTATION_FAIL_THRESHOLD = 0.02   ## TODO: fix unexpected fallback
 # Evaluation results from profiling, only consider cache case for anna
 def calc_anna_expectation(dependent_access_times):
     return 0.0006 + dependent_access_times * 0.0002
