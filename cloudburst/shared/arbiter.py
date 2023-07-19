@@ -87,7 +87,7 @@ class Arbiter:
             logging.info(f'Arbiter returns original args')
             return args
         
-        overhead_start = time.time()
+        # overhead_start = time.time()
         
         # assert len(args) == len(self.func_args) + 1, f'Final_arg len: {len(args)}, Func_arg len: {len(self.func_args)}'
         
@@ -118,8 +118,8 @@ class Arbiter:
         
         # logging.info(f'Client choose: {client_arg}, Expectation: {self.expectation}')
         
-        overhead_end = time.time()
-        logging.info(f'Arbiter overhead: {(overhead_end - overhead_start) * 1000} ms')
+        # overhead_end = time.time()
+        # logging.info(f'Arbiter overhead: {(overhead_end - overhead_start) * 1000} ms')
         
         return final_args
     
