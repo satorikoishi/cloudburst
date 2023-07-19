@@ -116,7 +116,7 @@ class Arbiter:
         # Expectation
         self.expectation = expectation
         
-        # logging.info(f'Client choose: {client_arg}, Expectation: {self.expectation}')
+        logging.info(f'Client choose: {client_arg}, Expectation: {self.expectation}')
         
         # overhead_end = time.time()
         # logging.info(f'Arbiter overhead: {(overhead_end - overhead_start) * 1000} ms')
