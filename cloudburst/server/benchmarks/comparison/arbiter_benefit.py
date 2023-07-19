@@ -75,9 +75,7 @@ def create_dag(cloudburst_client):
     utils.register_dag_for_single_func(cloudburst_client, dag_name)    
     utils.register_dag_for_single_func(cloudburst_client, f'{dag_name}_disable')    
 
-def run(cloudburst_client, num_requests, sckt, args):
-    global dag_name
-    
+def run(cloudburst_client, num_requests, sckt, args):    
     if len(args) < 1 and args[0] != 'create':
         print(f"{args} too short. Args: client_name")
         sys.exit(1)
@@ -95,7 +93,9 @@ def run(cloudburst_client, num_requests, sckt, args):
     compute_duration = 0
     if client_name == 'disable':
         client_name = 'arbiter'
-        dag_name = f'{dag_name}_disable'
+        cur_dag_name = f'{dag_name}_disable'
+    else:
+        cur_dag_name = dag_name
 
     total_time = []
     epoch_req_count = 0
@@ -109,10 +109,10 @@ def run(cloudburst_client, num_requests, sckt, args):
         else:
             access_count = 1
         
-        arg_map = {dag_name: [key, access_count, compute_duration, client_name]}
+        arg_map = {cur_dag_name: [key, access_count, compute_duration, client_name]}
         
         start = time.time()
-        res = cloudburst_client.call_dag(dag_name, arg_map, True, exec_latency=True)
+        res = cloudburst_client.call_dag(cur_dag_name, arg_map, True, exec_latency=True)
         end = time.time()
 
         if not res:
