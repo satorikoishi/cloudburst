@@ -89,7 +89,7 @@ class Arbiter:
         
         overhead_start = time.time()
         
-        assert len(args) == len(self.func_args) + 1, f'Final_arg len: {len(args)}, Func_arg len: {len(self.func_args)}'
+        # assert len(args) == len(self.func_args) + 1, f'Final_arg len: {len(args)}, Func_arg len: {len(self.func_args)}'
         
         if self.fallback_flag:
             # Fallback case
@@ -107,7 +107,7 @@ class Arbiter:
             else:
                 client_arg = ANNA_CLIENT_NAME
                 expectation = calc_anna_expectation(dependent_access_times)
-            logging.info(f'Dependent access: {dependent_access_times}')
+            # logging.info(f'Dependent access: {dependent_access_times}')
 
         # Choose the better client
         final_args = args[:-1]
@@ -116,7 +116,7 @@ class Arbiter:
         # Expectation
         self.expectation = expectation
         
-        logging.info(f'Client choose: {client_arg}, Expectation: {self.expectation}')
+        # logging.info(f'Client choose: {client_arg}, Expectation: {self.expectation}')
         
         overhead_end = time.time()
         logging.info(f'Arbiter overhead: {(overhead_end - overhead_start) * 1000} ms')
@@ -133,7 +133,7 @@ class Arbiter:
         else:
             # We collected enough latencies for comparison
             self.compare_decision, expectation = self.compare_choose_client()
-            logging.info(f'Fallback made decision: {self.compare_decision}, expectation: {expectation}')
+            # logging.info(f'Fallback made decision: {self.compare_decision}, expectation: {expectation}')
             return self.compare_decision, expectation
     
     def compare_choose_client(self):
@@ -155,7 +155,7 @@ class Arbiter:
         self.feedback_exec_times += 1
         if elapsed > EXPECTATION_UPPER_BOUND * self.expectation:
             self.expect_fail_count += 1
-            logging.info(f'Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
+            # logging.info(f'Latency beyond expectation, elapsed {elapsed}, expectation {self.expectation}')
             # Feedback verification
             if self.expect_fail_count > EXPECTATION_FAIL_THRESHOLD * FEEDBACK_EXEC_COUNT:
                 # Return to fallback case
