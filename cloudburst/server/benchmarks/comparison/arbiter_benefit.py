@@ -76,6 +76,8 @@ def create_dag(cloudburst_client):
     utils.register_dag_for_single_func(cloudburst_client, f'{dag_name}_disable')    
 
 def run(cloudburst_client, num_requests, sckt, args):
+    global dag_name
+    
     if len(args) < 1 and args[0] != 'create':
         print(f"{args} too short. Args: client_name")
         sys.exit(1)
