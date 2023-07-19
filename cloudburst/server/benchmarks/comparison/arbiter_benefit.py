@@ -72,14 +72,14 @@ def run(cloudburst_client, num_requests, sckt, args):
     exec_epoch_latencies = []
 
     for i in range(num_requests):
-        interval = i / 100
+        interval = i // 100
         if interval % 2 == 0:
             access_count = 16
         else:
             access_count = 1
             
         arg_map = {dag_name: [key, access_count, compute_duration, client_name]}
-        print(arg_map)
+        # print(arg_map)
         
         start = time.time()
         res = cloudburst_client.call_dag(dag_name, arg_map, True, exec_latency=True)
