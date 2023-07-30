@@ -57,11 +57,13 @@ def create_dag(cloudburst_client):
         sys.exit(1)
         
     def facebook_list_traversal(cloudburst, key, depth, client_name=DEFAULT_CLIENT_NAME):
+        value = None
         if client_name == "shredder":
             value = cloudburst.execute_js_fun(heavy_dag_name, key, client_name=client_name)
         else:
             for _ in range(depth):
                 if client_name == 'pocket':
+                    value = 0
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
                 else:
                     value = cloudburst.get(str(key), client_name=client_name)
