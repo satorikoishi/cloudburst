@@ -14,7 +14,6 @@ from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 dag_name = 'compute_emulate'
 KEY_MAX = 10
 VALUE = '1'
-SEC_TO_USEC = 1000000.0
 
 def generate_dataset(cloudburst_client, client_name):
     for key in range(KEY_MAX):
@@ -29,11 +28,7 @@ def create_dag(cloudburst_client):
         if client_name == "shredder":
             value = cloudburst.execute_js_fun(dag_name, key, access_count, compute_duration, client_name=client_name)
         else:
-            # precised sleep
-            now = time.time()
-            end = now + compute_duration / SEC_TO_USEC
-            while now < end:
-                now = time.time()
+            utils.emulate_exec(compute_duration)
             
             for i in range(access_count):
                 value = cloudburst.get(str(key), client_name=client_name)
@@ -51,12 +46,8 @@ def create_dag(cloudburst_client):
         if client_name == "shredder":
             value = cloudburst.execute_js_fun(dag_name, key, access_count, compute_duration, client_name=client_name)
         else:
-            # precised sleep
-            now = time.time()
-            end = now + compute_duration / SEC_TO_USEC
-            while now < end:
-                now = time.time()
-                
+            utils.emulate_exec(compute_duration)
+
             # Disable Arbiter
             ac_alias = access_count
             

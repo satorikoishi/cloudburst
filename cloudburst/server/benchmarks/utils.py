@@ -26,6 +26,8 @@ from cloudburst.shared.proto.cloudburst_pb2 import CloudburstError, DAG_ALREADY_
 BENCHMARK_START_PORT = 3000
 TRIGGER_PORT = 2999
 C_ID_BASE = 1234567890
+SEC_TO_USEC = 1000000.0
+POCKET_MOCK_LATENCY = 317
 
 def gen_c_id(offset):
     return f'{C_ID_BASE + offset}'
@@ -216,3 +218,10 @@ def log_throughput_to_csv(epoch, thruput, bname, num_clients, args, duration, cs
         if csv_file.tell() == 0:
             writer.writeheader()
         writer.writerow(csv_output)
+
+def emulate_exec(compute_duration):
+    # precised sleep
+    now = time.time()
+    end = now + compute_duration / SEC_TO_USEC
+    while now < end:
+        now = time.time()
