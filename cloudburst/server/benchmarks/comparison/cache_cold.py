@@ -34,7 +34,7 @@ def create_dag(cloudburst_client):
                     value = 0
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
                 else:
-                    value = cloudburst.get(str(key), client_name=client_name)
+                    value = cloudburst.get(str(int(key) + i), client_name=client_name)
         return value
 
     cloud_compute_emulate = cloudburst_client.register(compute_emulate, dag_name)
