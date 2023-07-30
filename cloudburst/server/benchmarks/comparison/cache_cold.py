@@ -61,10 +61,12 @@ def run(cloudburst_client, num_requests, sckt, args):
     logging.info(f'Running {dag_name}, num_requests: {num_requests}')
     
     key = '1'
+    cold_flag = False
     if args[0].isnumeric():
         # Test cold
-        key = args[0]
+        start_key = args[0]
         client_name = 'anna'
+        cold_flag = True
     else:
         # Normal case
         client_name = args[0]
@@ -76,7 +78,10 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_latencies = []
     exec_epoch_latencies = []
 
-    for _ in range(num_requests):
+    for i in range(num_requests):
+        if cold_flag:
+            key = str(int(start_key) + i * access_count)
+            
         arg_map = {dag_name: [key, access_count, compute_duration, client_name]}
         
         start = time.time()
