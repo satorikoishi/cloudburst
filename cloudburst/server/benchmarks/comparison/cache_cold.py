@@ -27,6 +27,8 @@ def create_dag(cloudburst_client):
         if client_name == "shredder":
             value = cloudburst.execute_js_fun(dag_name, key, access_count, compute_duration, client_name=client_name)
         else:
+            if client_name == 'pocket':
+                utils.emulate_exec(utils.POCKET_INIT_LATENCY)
             utils.emulate_exec(compute_duration)
             
             for i in range(access_count):
