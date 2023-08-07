@@ -64,6 +64,13 @@ def create_dag(cloudburst_client):
         if client_name == "shredder":
             sum = cloudburst.execute_js_fun(rpc_fun_name, id, k, client_name=client_name)
             return sum
+        if client_name == "pocket":
+            utils.emulate_exec(utils.POCKET_INIT_LATENCY)
+            access_count = 1
+            for i in range(k - 1):
+                access_count = access_count * 10
+            utils.emulate_exec(utils.POCKET_MOCK_LATENCY * access_count)
+            return 0
         
         friends = cloudburst.get(gen_userid(id)).tolist()
         sum = len(friends)
