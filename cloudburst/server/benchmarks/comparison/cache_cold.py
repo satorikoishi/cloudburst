@@ -11,7 +11,7 @@ from cloudburst.shared.reference import CloudburstReference
 from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 dag_name = 'compute_emulate'
-KEY_MAX = 64000
+KEY_MAX = 100000
 VALUE = '1'
 
 def generate_dataset(cloudburst_client, client_name):

@@ -40,6 +40,7 @@ def gen_userid(id):
 def key_args():
     return '1000001'
 
+# TODO: fix this dataset...
 def generate_dataset(cloudburst_client, client_name):    
     splitter = np.arange(0, UPPER_BOUND).tolist()
     cloudburst_client.put_object(key_args(), splitter, client_name=client_name)
