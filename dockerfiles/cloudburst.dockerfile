@@ -19,6 +19,9 @@ MAINTAINER Vikram Sreekanti <vsreekanti@gmail.com> version: 0.1
 ARG repo_org=satorikoishi
 ARG source_branch=master
 ARG build_branch=docker-build
+ARG HTTP_PROXY
+
+ENV HTTP_PROXY ${HTTP_PROXY}
 
 USER root
 
@@ -26,6 +29,8 @@ USER root
 # none are specified, we use satorikoishi/cloudburst by default. Install the KVS
 # client from the Anna project.
 WORKDIR $HYDRO_HOME/cloudburst
+RUN echo "HTTP Proxy is $HTTP_PROXY"
+RUN git config --global http.proxy ${HTTP_PROXY}
 RUN git remote remove origin && git remote add origin https://github.com/$repo_org/cloudburst
 RUN git fetch -p origin && git checkout -b $build_branch origin/$source_branch
 RUN rm -rf /usr/lib/python3/dist-packages/yaml
