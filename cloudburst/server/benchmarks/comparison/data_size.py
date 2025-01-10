@@ -36,7 +36,7 @@ def create_dag(cloudburst_client):
                     value = 0
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
                 else:
-                    value = cloudburst.get(str(key), client_name=client_name)
+                    value = cloudburst.get(str(int(key) + i), client_name=client_name)
         return value
 
     cloud_data_size_test = cloudburst_client.register(data_size_test, dag_name)
@@ -62,8 +62,16 @@ def run(cloudburst_client, num_requests, sckt, args):
     
     logging.info(f'Running {dag_name}, num_requests: {num_requests}')
     
-    key = str(random.randrange(KEY_MAX))
-    client_name = args[0]
+    key = '1'
+    cold_flag = False
+    if args[0].isnumeric():
+        # Test cold
+        start_key = args[0]
+        client_name = 'anna'
+        cold_flag = True
+    else:
+        # Normal case
+        client_name = args[0]
     access_count = int(args[1])
     data_size = int(args[2]) # useless, just for results
     compute_duration = int(args[3]) # us
@@ -73,7 +81,9 @@ def run(cloudburst_client, num_requests, sckt, args):
     epoch_latencies = []
     exec_epoch_latencies = []
 
-    for _ in range(num_requests):
+    for i in range(num_requests):
+        if cold_flag:
+            key = str(int(start_key) + i * access_count)
         arg_map = {dag_name: [key, access_count, compute_duration, client_name]}
         
         start = time.time()
