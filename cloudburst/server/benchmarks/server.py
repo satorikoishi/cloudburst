@@ -43,6 +43,7 @@ from cloudburst.server.benchmarks.comparison import (
     profile_executor,
     compute_emulate,
     data_size,
+    ycsb,
     facebook_social,
     arbiter_benefit,
     cache_cold
@@ -150,6 +151,9 @@ def run_bench(bname, num_requests, cloudburst, kvs, sckt, args=[], create=False)
                                                      sckt, args)
     elif bname == 'data_size':
         total, scheduler, kvs, retries = data_size.run(cloudburst, num_requests,
+                                                     sckt, args)
+    elif bname == 'ycsb':
+        total, scheduler, kvs, retries = ycsb.run(cloudburst, num_requests,
                                                      sckt, args)
     else:
         logging.info('Unknown benchmark type: %s!' % (bname))
