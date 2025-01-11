@@ -44,7 +44,7 @@ from cloudburst.server.benchmarks.comparison import (
     compute_emulate,
     data_size,
     ycsb,
-    real_app
+    real_app,
     facebook_social,
     arbiter_benefit,
     cache_cold
