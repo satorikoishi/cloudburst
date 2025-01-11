@@ -92,10 +92,10 @@ def create_dag(cloudburst_client):
             # k = 2
             key = '0'
             access_count = 1
-            concatenated_string = cloudburst.get(key, client_name=client_name)
+            concatenated_string = cloudburst.get(key, client_name='anna')
             direct_friends = concatenated_string.split()
             for _ in direct_friends:
-                concatenated_string = cloudburst.get(key, client_name=client_name)
+                concatenated_string = cloudburst.get(key, client_name='anna')
                 access_count += 1
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY - 210)
