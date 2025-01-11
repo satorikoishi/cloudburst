@@ -12,7 +12,7 @@ from cloudburst.shared.reference import CloudburstReference
 from cloudburst.shared.utils import DEFAULT_CLIENT_NAME
 
 dag_name = 'real_app'
-real_app_list = ['auth', 'calc-avg', 'k-hop', 'file-replicator', 'list-traversal', 'user-follow', 'image', 'video', 'ml-serving']
+real_app_list = ['auth', 'calc_avg', 'k_hop', 'file_replicator', 'list_traversal', 'user_follow', 'image', 'video', 'ml_serving']
 KEY_MAX = 1000
 VALUE = 'a' * 1024
 available_key = []
@@ -21,7 +21,7 @@ def generate_dataset(cloudburst_client, app_name, client_name):
     if app_name in ['auth']:
         for key in range(KEY_MAX):
             cloudburst_client.put_object(str(key), VALUE, client_name=client_name)
-    elif app_name in ['k-hop', 'list-traversal', 'user-follow']:
+    elif app_name in ['k_hop', 'list_traversal', 'user_follow']:
         dataset_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../dataset/facebook_combined.txt')
         edges = {}
         global available_key
@@ -38,12 +38,12 @@ def generate_dataset(cloudburst_client, app_name, client_name):
             for key, value in edges.items():
                 concatenated_string = ' '.join(x for x in value)
                 cloudburst_client.put_object(key, concatenated_string)
-    elif app_name in ['calc-avg']:
+    elif app_name in ['calc_avg']:
         for i in range(KEY_MAX):
             random_ints = [random.randint(0, 10000) for _ in range(10)]
             concatenated_string = ' '.join(str(num) for num in random_ints)
             cloudburst_client.put_object(str(i), concatenated_string, client_name=client_name)
-    elif app_name in ['file-replicator']:
+    elif app_name in ['file_replicator']:
         FILE_SIZE = 1024 * 1024
         FILE_NAME = 'tmp.dat'
         with open(FILE_NAME, 'wb') as f:
@@ -67,7 +67,7 @@ def create_dag(cloudburst_client):
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
             else:
                 res = cloudburst.get(key, client_name=client_name)
-        elif app_name == 'calc-avg':
+        elif app_name == 'calc_avg':
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
                 random_ints = [random.randint(0, 10000) for _ in range(10)]
@@ -76,14 +76,14 @@ def create_dag(cloudburst_client):
                 concatenated_string = cloudburst.get(key, client_name=client_name)
             extracted_ints = [int(num) for num in concatenated_string.split()]
             res = sum(extracted_ints) / len(extracted_ints)
-        elif app_name == 'file-replicator':
+        elif app_name == 'file_replicator':
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_1M_LATENCY)
                 utils.emulate_exec(utils.POCKET_1M_LATENCY)
             else:
                 res = cloudburst.get('source', client_name=client_name)
                 res = cloudburst.put('target', res, client_name=client_name)
-        elif app_name == 'user-follow':
+        elif app_name == 'user_follow':
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_1M_LATENCY)
                 utils.emulate_exec(utils.POCKET_1M_LATENCY)
