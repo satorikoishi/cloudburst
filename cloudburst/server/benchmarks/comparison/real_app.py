@@ -22,17 +22,18 @@ def generate_dataset(cloudburst_client, app_name, client_name):
             cloudburst_client.put_object(str(key), VALUE, client_name=client_name)
     elif app_name in ['k_hop', 'list_traversal', 'user_follow']:
         dataset_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../dataset/facebook_combined.txt')
-        edges = {}
+        edge_0 = []
         with open(dataset_path, 'r') as file:
             for line in file:
                 parts = line.strip().split()
                 first= parts[0]
+                if int(first) > 0:
+                    break
                 second = parts[1]
-                if first not in edges:
-                    edges[first] = []
-                    edges[first].append(second)
-            for key, value in edges.items():
-                concatenated_string = ' '.join(x for x in value)
+                if int(first) == 0:
+                    edge_0.append(second)
+            concatenated_string = ' '.join(x for x in edge_0)
+            for key in range(KEY_MAX):
                 cloudburst_client.put_object(key, concatenated_string)
     elif app_name in ['calc_avg']:
         for i in range(KEY_MAX):
@@ -148,6 +149,8 @@ def run(cloudburst_client, num_requests, sckt, args):
     exec_epoch_latencies = []
 
     for i in range(num_requests):
+        if app_name in ['k_hop', 'list_traversal', 'user_follow']:
+            key = str(i % KEY_MAX)
         arg_map = {dag_name: [key, app_name, client_name]}
         
         start = time.time()
