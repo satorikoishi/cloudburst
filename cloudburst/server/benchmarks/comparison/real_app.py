@@ -15,7 +15,6 @@ dag_name = 'real_app'
 real_app_list = ['auth', 'calc_avg', 'k_hop', 'file_replicator', 'list_traversal', 'user_follow', 'image', 'video', 'ml_serving']
 KEY_MAX = 1000
 VALUE = 'a' * 1024
-available_key = []
 
 def generate_dataset(cloudburst_client, app_name, client_name):
     if app_name in ['auth']:
@@ -24,7 +23,6 @@ def generate_dataset(cloudburst_client, app_name, client_name):
     elif app_name in ['k_hop', 'list_traversal', 'user_follow']:
         dataset_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../dataset/facebook_combined.txt')
         edges = {}
-        global available_key
         with open(dataset_path, 'r') as file:
             for line in file:
                 parts = line.strip().split()
@@ -33,8 +31,6 @@ def generate_dataset(cloudburst_client, app_name, client_name):
                 if first not in edges:
                     edges[first] = []
                     edges[first].append(second)
-                if first not in available_key:
-                    available_key.append(first)
             for key, value in edges.items():
                 concatenated_string = ' '.join(x for x in value)
                 cloudburst_client.put_object(key, concatenated_string)
@@ -85,36 +81,26 @@ def create_dag(cloudburst_client):
                 res = cloudburst.put('target', res, client_name=client_name)
         elif app_name == 'user_follow':
             if client_name == 'pocket':
-                utils.emulate_exec(utils.POCKET_1M_LATENCY)
-                utils.emulate_exec(utils.POCKET_1M_LATENCY)
-                utils.emulate_exec(utils.POCKET_1M_LATENCY)
+                utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
+                utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
+                utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
             else:
-                while True:
-                    key = str(np.random.zipf(2) - 1)
-                    if key in available_key:
-                        break
+                key = '0'
                 concatenated_string = cloudburst.get(key, client_name=client_name)
                 res = cloudburst.put(key, concatenated_string, client_name=client_name)
         elif app_name == 'k_hop':
             # k = 2
-            while True:
-                key = str(np.random.zipf(2) - 1)
-                if key in available_key:
-                    break
+            key = '0'
             access_count = 1
             concatenated_string = cloudburst.get(key, client_name=client_name)
             direct_friends = concatenated_string.split()
-            for x in direct_friends:
-                if x in available_key:
-                    concatenated_string = cloudburst.get(key, client_name=client_name)
-                    access_count += 1
+            for _ in direct_friends:
+                concatenated_string = cloudburst.get(key, client_name=client_name)
+                access_count += 1
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY - 210)
         elif app_name == 'list_traversal':
-            while True:
-                key = str(np.random.zipf(2) - 1)
-                if key in available_key:
-                    break
+            key = '0'
             for _ in range(2):
                 if client_name == 'pocket':
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
