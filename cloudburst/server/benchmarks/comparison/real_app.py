@@ -102,7 +102,7 @@ def create_dag(cloudburst_client):
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY - 210)
         elif app_name == 'list_traversal':
             key = '0'
-            for _ in range(2):
+            for _ in range(8):
                 if client_name == 'pocket':
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
                 else:
