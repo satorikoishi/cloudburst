@@ -118,7 +118,7 @@ def create_dag(cloudburst_client):
             else:
                 access_count = 8
             key = '0'
-            for _ in range(2):
+            for _ in range(access_count):
                 if client_name == 'pocket':
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
                 else:
