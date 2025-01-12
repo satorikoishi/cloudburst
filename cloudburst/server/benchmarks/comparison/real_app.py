@@ -120,7 +120,7 @@ def create_dag(cloudburst_client):
             key = '0'
             for _ in range(access_count):
                 if client_name == 'pocket':
-                    utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
+                    utils.emulate_exec(3 * utils.POCKET_MOCK_LATENCY)
                 else:
                     cloudburst.get(key, client_name=client_name)
         else:
