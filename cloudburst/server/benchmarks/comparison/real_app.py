@@ -20,7 +20,7 @@ def generate_dataset(cloudburst_client, app_name, client_name):
     if app_name in ['auth']:
         for key in range(KEY_MAX):
             cloudburst_client.put_object(str(key), VALUE, client_name=client_name)
-    elif app_name in ['k_hop', 'list_traversal', 'user_follow']:
+    elif app_name in ['k_hop', 'list_traversal', 'list_traversal', 'user_follow']:
         dataset_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), '../dataset/facebook_combined.txt')
         edge_0 = []
         with open(dataset_path, 'r') as file:
@@ -101,6 +101,22 @@ def create_dag(cloudburst_client):
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY - 210)
         elif app_name == 'list_traversal':
+            key = '0'
+            for _ in range(2):
+                if client_name == 'pocket':
+                    utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
+                else:
+                    cloudburst.get(key, client_name=client_name)
+        elif app_name == 'list_traversal_mix':
+            r = random.random()
+            if r < 0.4:
+                access_count = 1
+            elif r < 0.6:
+                access_count = 2
+            elif r < 0.8:
+                access_count = 4
+            else:
+                access_count = 8
             key = '0'
             for _ in range(2):
                 if client_name == 'pocket':
