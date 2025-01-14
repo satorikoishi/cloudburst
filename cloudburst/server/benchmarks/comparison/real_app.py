@@ -108,17 +108,9 @@ def create_dag(cloudburst_client):
                 else:
                     cloudburst.get(key, client_name=client_name)
         elif app_name == 'list_traversal_mix':
-            r = random.random()
-            if r < 0.4:
-                access_count = 1
-            elif r < 0.6:
-                access_count = 2
-            elif r < 0.8:
-                access_count = 4
-            else:
-                access_count = 8
+            depth = int(key)
             key = '0'
-            for _ in range(access_count):
+            for _ in range(depth):
                 if client_name == 'pocket':
                     utils.emulate_exec(3 * utils.POCKET_MOCK_LATENCY)
                 else:
@@ -167,6 +159,16 @@ def run(cloudburst_client, num_requests, sckt, args):
     for i in range(num_requests):
         if app_name in ['k_hop', 'list_traversal', 'user_follow']:
             key = str(i % KEY_MAX)
+        if app_name == 'list_traversal_mix':
+            r = random.random()
+            if r < 0.4:
+                key = 1
+            elif r < 0.6:
+                key = 2
+            elif r < 0.8:
+                key = 4
+            else:
+                key = 8
         arg_map = {dag_name: [key, app_name, client_name]}
         
         start = time.time()
