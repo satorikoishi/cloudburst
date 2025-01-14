@@ -58,8 +58,16 @@ def create_dag(cloudburst_client):
         res = None
         if client_name == 'pocket':
             utils.emulate_exec(utils.POCKET_INIT_LATENCY)
-            
-        if app_name == 'auth':
+        
+        if app_name == 'list_traversal_mix':
+            depth = int(key)
+            key = '0'
+            for _ in range(depth):
+                if client_name == 'pocket':
+                    utils.emulate_exec(3 * utils.POCKET_MOCK_LATENCY)
+                else:
+                    cloudburst.get(key, client_name=client_name)
+        elif app_name == 'auth':
             if client_name == 'pocket':
                 utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
             else:
@@ -105,14 +113,6 @@ def create_dag(cloudburst_client):
             for _ in range(8):
                 if client_name == 'pocket':
                     utils.emulate_exec(utils.POCKET_MOCK_LATENCY)
-                else:
-                    cloudburst.get(key, client_name=client_name)
-        elif app_name == 'list_traversal_mix':
-            depth = int(key)
-            key = '0'
-            for _ in range(depth):
-                if client_name == 'pocket':
-                    utils.emulate_exec(3 * utils.POCKET_MOCK_LATENCY)
                 else:
                     cloudburst.get(key, client_name=client_name)
         else:
