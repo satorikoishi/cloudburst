@@ -61,7 +61,7 @@ def create_dag(cloudburst_client):
         
         if app_name == 'list_traversal_mix':
             depth = int(key)
-            key = '0'
+            key = '1'
             for _ in range(depth):
                 if client_name == 'pocket':
                     utils.emulate_exec(3 * utils.POCKET_MOCK_LATENCY)
